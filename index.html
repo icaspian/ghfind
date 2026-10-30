@@ -3,61 +3,37 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>GHFIND — Global Intelligence</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌐</text></svg>">
+  <title>◇ GHFIND — Global Intelligence</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐣</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Kanit:wght@600;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <!-- Live Map Background -->
+  <div class="bg-grid"></div>
   <canvas id="map-canvas"></canvas>
 
   <nav class="topbar">
     <a class="nav-logo" href="index.html">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-      GHFIND
+      <span class="dia">◇</span> GHFIND
     </a>
     <div class="nav-links">
-      <a href="index.html" class="active">Search</a>
+      <a href="index.html" class="active">Home</a>
       <a href="leaderboard.html">Leaderboard</a>
-      <a href="#" id="nav-favs">Favorites</a>
       <a href="https://github.com/7helix/ghfind" target="_blank">CLI Tool</a>
     </div>
   </nav>
 
   <main class="wrap">
-    <section class="hero" style="padding-bottom: 2rem;">
-      <h1>Search the global network.</h1>
-      <p>Discover repositories, track live developer activity, and explore the open-source ecosystem.</p>
+    <section class="hero">
+      <h1>SEARCH THE NETWORK</h1>
+      <p>Discover repositories, track live developer activity, and explore the open-source ecosystem in real-time.</p>
       
-      <!-- Main Search Bar -->
       <div class="search-wrap">
         <input type="text" id="q" placeholder="Search repositories (e.g. react, rust, ai)…" autocomplete="off">
-        <button id="search-btn">Search</button>
-      </div>
-
-      <!-- Filters -->
-      <div class="filters">
-        <div class="chips" id="langs">
-          <span class="lbl">Language:</span>
-          <button class="chip on" data-v="">Any</button>
-          <button class="chip" data-v="lua">Lua</button>
-          <button class="chip" data-v="python">Python</button>
-          <button class="chip" data-v="rust">Rust</button>
-          <button class="chip" data-v="go">Go</button>
-          <button class="chip" data-v="javascript">JS</button>
-          <button class="chip" data-v="typescript">TS</button>
-        </div>
-        <div class="chips" id="sorts">
-          <span class="lbl">Sort:</span>
-          <button class="chip on" data-v="">Best</button>
-          <button class="chip" data-v="stars">Stars</button>
-          <button class="chip" data-v="forks">Forks</button>
-          <button class="chip" data-v="updated">Fresh</button>
-        </div>
+        <button id="search-btn">RUN</button>
       </div>
     </section>
 
@@ -65,43 +41,17 @@
     <div id="grid" class="grid"></div>
   </main>
 
-  <!-- Modal for Repo Details -->
-  <div class="modal" id="repo-modal" hidden>
-    <div class="modal-back" id="modal-close"></div>
-    <div class="modal-panel">
-      <button class="modal-close-btn" id="modal-x">✕</button>
-      <div class="modal-body" id="modal-body"></div>
-    </div>
-  </div>
-
-  <!-- Drawer for Favorites -->
-  <div class="drawer" id="drawer" hidden>
-    <div class="drawer-back" id="drawer-close"></div>
-    <div class="drawer-panel">
-      <div class="drawer-head">
-        <h3>Favorites</h3>
-        <button class="modal-close-btn" id="drawer-x">✕</button>
-      </div>
-      <div class="drawer-body" id="drawer-body"></div>
-    </div>
-  </div>
-
   <script>
     const $ = s => document.querySelector(s);
-    const $$ = s => [...document.querySelectorAll(s)];
-    const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
     
-    // State
-    const state = { lang: '', sort: '', q: '', busy: false, favs: JSON.parse(localStorage.getItem('ghf_favs') || '[]') };
-
-    // --- 1. Map Animation Logic ---
+    // ═══════════════════════════════════════════════════════════════
+    // CYBER MAP ANIMATION
+    // ═══════════════════════════════════════════════════════════════
     const canvas = $('#map-canvas');
     const ctx = canvas.getContext('2d');
-    let w, h, hubs = [], pulses = [];
-    const locations = [
-      [0.15, 0.3], [0.18, 0.35], [0.25, 0.3], [0.32, 0.3], [0.35, 0.35], 
-      [0.45, 0.3], [0.48, 0.35], [0.65, 0.45], [0.75, 0.35], [0.8, 0.4], [0.82, 0.25], [0.85, 0.8]
-    ];
+    let w, h;
+    let hubs = [];
+    let pulses = [];
 
     function resize() {
       w = canvas.width = window.innerWidth;
@@ -110,230 +60,149 @@
     window.addEventListener('resize', resize);
     resize();
 
-    for (let x = 0; x < w; x += 20) {
-      for (let y = 0; y < h; y += 20) {
-        if (Math.random() > 0.7 && (x > w*0.1 && x < w*0.9 && y > h*0.2 && y < h*0.8)) {
-          hubs.push({ x, y, baseOpacity: Math.random() * 0.2 + 0.05, pulse: 0 });
+    // Tech hubs (x, y percentages)
+    const locations = [
+      [0.15, 0.3], [0.18, 0.35], // US West
+      [0.25, 0.3], [0.28, 0.35], // US Central
+      [0.32, 0.3], [0.35, 0.35], // US East
+      [0.45, 0.3], [0.48, 0.35], // Europe
+      [0.65, 0.45],              // India
+      [0.75, 0.35], [0.8, 0.4],  // Asia
+      [0.82, 0.25],              // Japan
+      [0.85, 0.8],               // Australia
+      [0.35, 0.7]                // South America
+    ];
+
+    // Generate node grid
+    for (let x = 0; x < w; x += 30) {
+      for (let y = 0; y < h; y += 30) {
+        if (Math.random() > 0.8 && (x > w*0.1 && x < w*0.9 && y > h*0.2 && y < h*0.8)) {
+          hubs.push({ x, y, baseOpacity: Math.random() * 0.3 + 0.1, pulse: 0 });
         }
       }
     }
 
     function draw() {
       ctx.clearRect(0, 0, w, h);
+      
+      // Draw nodes
       hubs.forEach(hub => {
         hub.pulse *= 0.95;
         ctx.beginPath();
         ctx.arc(hub.x, hub.y, 1.5, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255, 255, 255, ${hub.baseOpacity + hub.pulse})`;
+        ctx.fillStyle = `rgba(0, 229, 255, ${hub.baseOpacity + hub.pulse})`;
         ctx.fill();
       });
 
+      // Draw pulses (lasers)
       for (let i = pulses.length - 1; i >= 0; i--) {
         let p = pulses[i];
-        p.progress += 0.02;
-        if (p.progress >= 1) { pulses.splice(i, 1); continue; }
-        const startX = p.start[0] * w, startY = p.start[1] * h;
-        const endX = p.end[0] * w, endY = p.end[1] * h;
-        const cx = (startX + endX) / 2, cy = (startY + endY) / 2 - Math.abs(startX - endX) * 0.4;
-        const opacity = Math.sin(p.progress * Math.PI);
-        
+        p.progress += 0.015;
+        if (p.progress >= 1) {
+          pulses.splice(i, 1);
+          continue;
+        }
+
+        const startX = p.start[0] * w;
+        const startY = p.start[1] * h;
+        const endX = p.end[0] * w;
+        const endY = p.end[1] * h;
+
+        const cx = (startX + endX) / 2;
+        const cy = (startY + endY) / 2 - Math.abs(startX - endX) * 0.4;
+
         ctx.beginPath();
         ctx.moveTo(startX, startY);
         ctx.quadraticCurveTo(cx, cy, endX, endY);
-        ctx.strokeStyle = `rgba(139, 92, 246, ${opacity})`;
-        ctx.lineWidth = 1.5;
+        
+        const opacity = Math.sin(p.progress * Math.PI);
+        ctx.strokeStyle = `rgba(0, 229, 255, ${opacity * 0.6})`;
+        ctx.lineWidth = 1;
         ctx.stroke();
 
+        // Glow dot
         const t = p.progress;
         const px = (1-t)*(1-t)*startX + 2*(1-t)*t*cx + t*t*endX;
         const py = (1-t)*(1-t)*startY + 2*(1-t)*t*cy + t*t*endY;
+        
         ctx.beginPath();
         ctx.arc(px, py, 2, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(139, 92, 246, ${opacity})`;
+        ctx.fillStyle = `rgba(168, 240, 74, ${opacity})`; // Lime dot
         ctx.fill();
-        ctx.shadowColor = '#8b5cf6';
+        ctx.shadowColor = '#a8f04a';
         ctx.shadowBlur = 10;
       }
       ctx.shadowBlur = 0;
+
       requestAnimationFrame(draw);
     }
 
+    // Spawn pulses randomly
     setInterval(() => {
-      if (pulses.length < 15) {
+      if (pulses.length < 8) {
         const start = locations[Math.floor(Math.random() * locations.length)];
         const end = locations[Math.floor(Math.random() * locations.length)];
-        if (start !== end) pulses.push({ start, end, progress: 0 });
+        if (start !== end) {
+          pulses.push({ start, end, progress: 0 });
+        }
       }
-    }, 600);
+    }, 900);
+
     draw();
 
-    // --- 2. Search Logic ---
-    async function ghSearch(q, page = 1) {
-      let query = q;
-      if (state.lang) query += ' language:' + state.lang;
-      
-      const p = new URLSearchParams({ q: query, per_page: 12, page });
-      if (state.sort) { p.set('sort', state.sort); p.set('order', 'desc'); }
-      
-      const r = await fetch('https://api.github.com/search/repositories?' + p, {
-        headers: { Accept: 'application/vnd.github+json' }
-      });
-      const j = await r.json();
-      if (!r.ok) throw new Error(j.message || 'HTTP ' + r.status);
-      return j;
-    }
-
-    async function runSearch(q) {
-      if (state.busy || !q.trim()) return;
-      state.busy = true;
-      state.q = q;
+    // ═══════════════════════════════════════════════════════════════
+    // SEARCH LOGIC
+    // ═══════════════════════════════════════════════════════════════
+    async function search(q) {
+      if (!q.trim()) return;
       $('#status').hidden = false;
-      $('#status').innerHTML = '<div class="loader"></div>Scanning network...';
+      $('#status').innerHTML = '<div class="loader"></div>SCANNING NETWORK...';
       $('#grid').innerHTML = '';
 
       try {
-        const d = await ghSearch(q);
-        if (d.items.length === 0) {
-          $('#status').textContent = 'No repositories found.';
+        const url = `https://api.github.com/search/repositories?q=${encodeURIComponent(q)}&sort=stars&order=desc&per_page=12`;
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if (!res.ok) throw new Error(data.message);
+
+        if (data.items.length === 0) {
+          $('#status').textContent = 'NO REPOSITORIES FOUND.';
           return;
         }
+
         $('#status').hidden = true;
-        renderGrid(d.items);
+        
+        data.items.forEach(repo => {
+          const el = document.createElement('a');
+          el.href = repo.html_url;
+          el.target = '_blank';
+          el.className = 'card';
+          el.innerHTML = `
+            <div class="card-head">
+              <img class="card-avatar" src="${repo.owner.avatar_url}" alt="">
+              <div class="card-repo">${repo.full_name}</div>
+            </div>
+            <div class="card-desc">${repo.description || 'No description provided.'}</div>
+            <div class="card-stats">
+              <span>★ ${repo.stargazers_count.toLocaleString()}</span>
+              <span>⑂ ${repo.forks_count.toLocaleString()}</span>
+              <span class="lang">${repo.language || 'TXT'}</span>
+            </div>
+          `;
+          $('#grid').appendChild(el);
+        });
+
       } catch (e) {
-        $('#status').innerHTML = `<span class="error">Error: ${e.message}</span>`;
-      } finally {
-        state.busy = false;
+        $('#status').innerHTML = `<span class="error">ERR: ${e.message.toUpperCase()}</span>`;
       }
     }
 
-    function renderGrid(items) {
-      items.forEach(repo => {
-        const isFav = state.favs.some(f => f.full_name === repo.full_name);
-        const el = document.createElement('div');
-        el.className = 'card';
-        el.innerHTML = `
-          <div class="card-head">
-            <img class="card-avatar" src="${repo.owner.avatar_url}" alt="">
-            <div class="card-repo">${esc(repo.full_name)}</div>
-            <button class="fav-btn ${isFav ? 'on' : ''}" data-repo='${JSON.stringify(repo).replace(/'/g, "&#39;")}'>
-              ${isFav ? '★' : '☆'}
-            </button>
-          </div>
-          <div class="card-desc">${esc(repo.description || 'No description provided.')}</div>
-          <div class="card-stats">
-            <span>⭐ ${repo.stargazers_count.toLocaleString()}</span>
-            <span>🍴 ${repo.forks_count.toLocaleString()}</span>
-            <span class="lang">${repo.language || 'Text'}</span>
-          </div>
-          <div class="card-actions">
-            <button class="btn-details">View Details</button>
-            <a href="${repo.html_url}" target="_blank" class="btn-link">Open ↗</a>
-          </div>
-        `;
-
-        // Favorite Toggle
-        el.querySelector('.fav-btn').addEventListener('click', (e) => {
-          e.stopPropagation();
-          toggleFav(repo);
-          e.target.classList.toggle('on');
-          e.target.textContent = e.target.classList.contains('on') ? '★' : '☆';
-        });
-
-        // Open Modal
-        el.querySelector('.btn-details').addEventListener('click', () => openModal(repo));
-
-        $('#grid').appendChild(el);
-      });
-    }
-
-    // --- 3. Modal Logic ---
-    async function openModal(repo) {
-      const m = $('#repo-modal');
-      const body = $('#modal-body');
-      m.hidden = false;
-      
-      body.innerHTML = `
-        <div style="display:flex; gap:1rem; align-items:center; margin-bottom:1.5rem;">
-          <img src="${repo.owner.avatar_url}" style="width:64px; height:64px; border-radius:50%;">
-          <div>
-            <h2 style="margin:0; font-size:1.5rem;">${esc(repo.full_name)}</h2>
-            <p style="margin:0; color:var(--text-muted);">${esc(repo.description || '')}</p>
-          </div>
-        </div>
-        <div class="modal-stats">
-          <div><strong>${repo.stargazers_count.toLocaleString()}</strong> Stars</div>
-          <div><strong>${repo.forks_count.toLocaleString()}</strong> Forks</div>
-          <div><strong>${repo.language || 'Text'}</strong> Language</div>
-        </div>
-        <div class="readme-container"><div class="loader"></div></div>
-      `;
-
-      try {
-        const r = await fetch(`https://api.github.com/repos/${repo.full_name}/readme`, {
-          headers: { Accept: 'application/vnd.github.raw' }
-        });
-        const text = await r.text();
-        body.querySelector('.readme-container').innerHTML = `<pre class="readme">${esc(text.slice(0, 5000))}</pre>`;
-      } catch {
-        body.querySelector('.readme-container').innerHTML = `<p>Could not load README.</p>`;
-      }
-    }
-
-    $('#modal-close').addEventListener('click', () => $('#repo-modal').hidden = true);
-    $('#modal-x').addEventListener('click', () => $('#repo-modal').hidden = true);
-
-    // --- 4. Favorites Logic ---
-    function toggleFav(repo) {
-      const i = state.favs.findIndex(f => f.full_name === repo.full_name);
-      if (i >= 0) state.favs.splice(i, 1);
-      else state.favs.push(repo);
-      localStorage.setItem('ghf_favs', JSON.stringify(state.favs));
-    }
-
-    $('#nav-favs').addEventListener('click', (e) => {
-      e.preventDefault();
-      const d = $('#drawer');
-      const body = $('#drawer-body');
-      d.hidden = false;
-      body.innerHTML = state.favs.length ? '' : '<p style="color:var(--text-muted)">No favorites yet.</p>';
-      
-      state.favs.forEach(f => {
-        const el = document.createElement('div');
-        el.className = 'fav-item';
-        el.innerHTML = `
-          <img src="${f.owner.avatar_url}" style="width:24px; height:24px; border-radius:50%;">
-          <span>${esc(f.full_name)}</span>
-        `;
-        el.addEventListener('click', () => openModal(f));
-        body.appendChild(el);
-      });
-    });
-
-    $('#drawer-close').addEventListener('click', () => $('#drawer').hidden = true);
-    $('#drawer-x').addEventListener('click', () => $('#drawer').hidden = true);
-
-    // --- 5. UI Listeners ---
-    $('#search-btn').addEventListener('click', () => runSearch($('#q').value));
+    $('#search-btn').addEventListener('click', () => search($('#q').value));
     $('#q').addEventListener('keydown', e => {
-      if (e.key === 'Enter') runSearch($('#q').value);
+      if (e.key === 'Enter') search($('#q').value);
     });
 
-    $$('#langs .chip').forEach(c => c.addEventListener('click', () => {
-      state.lang = c.dataset.v;
-      $$('#langs .chip').forEach(b => b.classList.remove('on'));
-      c.classList.add('on');
-      if ($('#q').value) runSearch($('#q').value);
-    }));
-
-    $$('#sorts .chip').forEach(c => c.addEventListener('click', () => {
-      state.sort = c.dataset.v;
-      $$('#sorts .chip').forEach(b => b.classList.remove('on'));
-      c.classList.add('on');
-      if ($('#q').value) runSearch($('#q').value);
-    }));
-
-    // Default search on load
-    runSearch('stars:>10000');
   </script>
 </body>
 </html>
