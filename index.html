@@ -243,7 +243,7 @@ const LANG_COLORS = {
   'Zig':'#ff9d00','Java':'#ff7a3d','Ruby':'#ff2e63','Haskell':'#b47aff',
   'Shell':'#4ade80','Vim script':'#7dff4d','Nix':'#7dc4ff'
 };
-const langColor = l => LANG_COLORS[l] || '#00e5ff';
+const langColor = l => LANG_COLORS[l] || '#6366f1';
 
 const LS = {
   get(k, d) { try { return JSON.parse(localStorage.getItem('ghf_'+k)) ?? d } catch { return d } },
@@ -1356,9 +1356,7 @@ if (qp) {
   run(qp);
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   MAP CANVAS (Matches new Indigo/Emerald Theme)
-   ═══════════════════════════════════════════════════════════════ */
+/* Map Canvas JS */
 const canvas = document.getElementById('map-canvas');
 if (canvas) {
   const ctx = canvas.getContext('2d');
@@ -1389,7 +1387,6 @@ if (canvas) {
   function draw() {
     ctx.clearRect(0, 0, w, h);
     
-    // Draw nodes (Emerald green)
     hubs.forEach(hub => {
       hub.pulse *= 0.95;
       ctx.beginPath();
@@ -1398,7 +1395,6 @@ if (canvas) {
       ctx.fill();
     });
 
-    // Draw pulses (Indigo lines)
     for (let i = pulses.length - 1; i >= 0; i--) {
       let p = pulses[i];
       p.progress += 0.02;
