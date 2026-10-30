@@ -1,1359 +1,339 @@
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>◇ GHFIND — repo searcher</title>
-<meta name="description" content="GitHub repository search tool — pure Lua, single file.">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐣</text></svg>">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Kanit:wght@600;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>GHFIND — Global Intelligence</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌐</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div class="bg-grid"></div>
+  <!-- Live Map Background -->
+  <canvas id="map-canvas"></canvas>
 
-<nav class="topbar">
-  <a class="nav-logo" href="#top">
-    <span class="dia">◇</span>
-    <span>GHFIND</span>
-  </a>
-  <button class="nav-toggle" id="nav-toggle" aria-label="menu" type="button">☰</button>
-  <div class="nav-links" id="nav-links">
-    <a class="active" href="#top"><span class="dia-sm">◇</span> HOME</a>
-    <a href="#search"><span class="dia-sm">◇</span> SEARCH</a>
-    <a href="#" id="nav-favs"><span class="dia-sm">◇</span> FAVS<span class="badge" id="favc">0</span><kbd>f</kbd></a>
-    <a href="#" id="nav-hist"><span class="dia-sm">◇</span> HISTORY<kbd>h</kbd></a>
-    <a href="#" id="nav-presets"><span class="dia-sm">◇</span> PRESETS<kbd>p</kbd></a>
-    <a href="#" id="nav-settings"><span class="dia-sm">◇</span> SETTINGS<kbd>s</kbd></a>
-    <a href="#" id="nav-install" class="nav-mid"><span class="dia-sm">◇</span> INSTALL</a>
-    <a class="cta" href="https://github.com/7helix/ghfind" target="_blank" rel="noopener"><span class="dia-sm">◇</span> GITHUB</a>
-  </div>
-</nav>
+  <nav class="topbar">
+    <a class="nav-logo" href="index.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+      GHFIND
+    </a>
+    <div class="nav-links">
+      <a href="index.html" class="active">Search</a>
+      <a href="leaderboard.html">Leaderboard</a>
+      <a href="#" id="nav-favs">Favorites</a>
+      <a href="https://github.com/7helix/ghfind" target="_blank">CLI Tool</a>
+    </div>
+  </nav>
 
-<section class="hero" id="top">
-  <div class="hero-left">
-    <div class="signal">
-      <span class="signal-dot"></span>
-      PUBLIC SIGNAL / ONLINE
-    </div>
-    <h1 class="hero-title">GHFIND</h1>
-    <div class="hero-tag">github search · pure lua · single file</div>
-    <div class="hero-actions">
-      <button class="btn-green" id="copy-install">COPY INSTALL CMD</button>
-      <button class="btn-outline" id="scroll-search">SEARCH NOW<kbd>/</kbd></button>
-    </div>
-    <div class="info-boxes">
-      <div class="info-box">
-        <div class="k">NODE</div>
-        <div class="v">ghfind.co</div>
+  <main class="wrap">
+    <section class="hero" style="padding-bottom: 2rem;">
+      <h1>Search the global network.</h1>
+      <p>Discover repositories, track live developer activity, and explore the open-source ecosystem.</p>
+      
+      <!-- Main Search Bar -->
+      <div class="search-wrap">
+        <input type="text" id="q" placeholder="Search repositories (e.g. react, rust, ai)…" autocomplete="off">
+        <button id="search-btn">Search</button>
       </div>
-      <div class="info-box">
-        <div class="k">RATE LIMIT</div>
-        <div class="v" id="rate">—</div>
-      </div>
-      <div class="info-box">
-        <div class="k">UTC</div>
-        <div class="v" id="utc">—</div>
-      </div>
-    </div>
-  </div>
 
-  <div class="hero-right">
-    <svg class="orbit" viewBox="0 0 500 500" aria-hidden="true">
-      <circle cx="250" cy="250" r="80"/>
-      <circle cx="250" cy="250" r="160" stroke-dasharray="4 8"/>
-      <circle cx="250" cy="250" r="230" stroke-dasharray="2 10"/>
-      <polygon points="250,40 460,250 250,460 40,250" fill="none"/>
-    </svg>
-    <div class="mascot">
-      <div class="mascot-glow"></div>
-      <div class="mascot-glyph">🐣</div>
-    </div>
-    <div class="hero-meta meta-l">
-      <div>CL/NODE::03</div>
-      <div>AUTH::PUBLIC</div>
-      <div>STATE::READ</div>
-    </div>
-    <div class="hero-meta meta-r">
-      <div>GHFIND</div>
-      <div>GATEWAY</div>
-      <div>ONLINE</div>
-    </div>
-  </div>
-</section>
-
-<section class="search-section" id="search">
-  <div class="section-head">
-    <span class="dia">◆</span>
-    <h2>SEARCH TERMINAL</h2>
-    <span class="line"></span>
-    <span class="dim">live</span>
-  </div>
-
-  <div class="bar">
-    <span class="prompt">›</span>
-    <input id="q" type="text" placeholder="query repositories…" autocomplete="off" spellcheck="false">
-    <kbd>/</kbd>
-    <button id="go">RUN<kbd>↵</kbd></button>
-  </div>
-
-  <div class="filters">
-    <div class="chips" id="langs">
-      <span class="lbl">// lang</span>
-      <button class="chip on" data-v="">any</button>
-      <button class="chip" data-v="lua">lua</button>
-      <button class="chip" data-v="python">python</button>
-      <button class="chip" data-v="rust">rust</button>
-      <button class="chip" data-v="go">go</button>
-      <button class="chip" data-v="javascript">js</button>
-      <button class="chip" data-v="typescript">ts</button>
-      <button class="chip" data-v="c">c</button>
-      <button class="chip" data-v="c++">c++</button>
-      <button class="chip" data-v="zig">zig</button>
-    </div>
-    <div class="chips right" id="sorts">
-      <span class="lbl">// sort</span>
-      <button class="chip on" data-v="">best</button>
-      <button class="chip" data-v="stars">★ stars</button>
-      <button class="chip" data-v="forks">⌥ forks</button>
-      <button class="chip" data-v="updated">◷ fresh</button>
-    </div>
-  </div>
-
-  <div class="filters">
-    <div class="chips" id="stars">
-      <span class="lbl">★</span>
-      <button class="chip on" data-v="">any</button>
-      <button class="chip" data-v="10">10+</button>
-      <button class="chip" data-v="100">100+</button>
-      <button class="chip" data-v="1000">1k+</button>
-      <button class="chip" data-v="10000">10k+</button>
-    </div>
-    <div class="chips" id="age">
-      <span class="lbl">◷</span>
-      <button class="chip on" data-v="">any</button>
-      <button class="chip" data-v="30">30d</button>
-      <button class="chip" data-v="180">6mo</button>
-      <button class="chip" data-v="365">1y</button>
-      <button class="chip" data-v="1095">3y</button>
-    </div>
-    <div class="chips" id="size">
-      <span class="lbl">⌘</span>
-      <button class="chip on" data-v="">any</button>
-      <button class="chip" data-v="small">&lt;1MB</button>
-      <button class="chip" data-v="medium">1-50MB</button>
-      <button class="chip" data-v="large">&gt;50MB</button>
-    </div>
-  </div>
-
-  <div class="filters">
-    <div class="chips right">
-      <button class="chip" id="reset-filters">✕ reset<kbd>x</kbd></button>
-      <button class="chip" id="random">⚄ random<kbd>r</kbd></button>
-      <button class="chip" id="trend">▴ trending<kbd>t</kbd></button>
-      <button class="chip" id="watch">◉ watch</button>
-      <button class="chip" id="compare">⊕ compare<kbd>c</kbd></button>
-      <button class="chip" id="view">▦ grid<kbd>v</kbd></button>
-      <button class="chip" id="density">⊞ comfy<kbd>d</kbd></button>
-      <button class="chip" id="theme">◐</button>
-      <button class="chip" id="help">?<kbd>?</kbd></button>
-    </div>
-  </div>
-
-  <p id="status" class="status"></p>
-  <div class="stats-bar" id="stats-bar" hidden></div>
-  <div id="grid" class="grid"></div>
-
-  <div class="more-wrap">
-    <button id="more" class="more" hidden>LOAD MORE</button>
-  </div>
-</section>
-
-<div class="drawer" id="drawer" hidden>
-  <div class="drawer-back" id="drawer-back"></div>
-  <div class="drawer-panel">
-    <div class="drawer-head">
-      <h3 id="drawer-title">favorites</h3>
-      <div class="drawer-actions" id="drawer-actions"></div>
-      <button class="icon-btn" id="drawer-close">✕ <kbd>esc</kbd></button>
-    </div>
-    <div class="drawer-body" id="drawer-body"></div>
-  </div>
-</div>
-
-<div class="modal" id="modal" hidden>
-  <div class="modal-back" id="modal-back"></div>
-  <div class="modal-panel">
-    <button class="icon-btn modal-close" id="modal-close">✕ <kbd>esc</kbd></button>
-    <div class="modal-body" id="modal-body"></div>
-  </div>
-</div>
-
-<div class="modal" id="modal2" hidden>
-  <div class="modal-back" id="modal2-back"></div>
-  <div class="modal-panel">
-    <button class="icon-btn modal-close" id="modal2-close">✕ <kbd>esc</kbd></button>
-    <div class="modal-body" id="modal2-body"></div>
-  </div>
-</div>
-
-<div class="modal" id="modal3" hidden>
-  <div class="modal-back" id="modal3-back"></div>
-  <div class="modal-panel">
-    <button class="icon-btn modal-close" id="modal3-close">✕ <kbd>esc</kbd></button>
-    <div class="modal-body" id="modal3-body"></div>
-  </div>
-</div>
-
-<div class="toast" id="toast"></div>
-
-<div class="ticker">
-  <div class="ticker-track" id="ticker"></div>
-</div>
-
-<script>
-const $ = s => document.querySelector(s);
-const $$ = s => [...document.querySelectorAll(s)];
-const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({
-  '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
-}[c]));
-const fmt = n => n >= 1e6 ? (n/1e6).toFixed(1)+'M'
-              : n >= 1e3 ? (n/1e3).toFixed(1)+'k'
-              : String(n|0);
-const fmtSize = kb => kb >= 1024*1024 ? (kb/1024/1024).toFixed(1)+'GB'
-                   : kb >= 1024 ? (kb/1024).toFixed(1)+'MB'
-                   : kb + 'KB';
-const ago = d => {
-  const s = (Date.now() - new Date(d)) / 1000;
-  if (s < 3600) return Math.floor(s/60)+'m';
-  if (s < 86400) return Math.floor(s/3600)+'h';
-  if (s < 2592000) return Math.floor(s/86400)+'d';
-  if (s < 31536000) return Math.floor(s/2592000)+'mo';
-  return Math.floor(s/31536000)+'y';
-};
-
-const LANG_COLORS = {
-  'Lua':'#00e5ff','Python':'#a8f04a','Rust':'#ff5c3d','Go':'#00d4ff',
-  'JavaScript':'#f7df1e','TypeScript':'#00a8ff','C':'#7a7a7a','C++':'#ff2e97',
-  'Zig':'#ff9d00','Java':'#ff7a3d','Ruby':'#ff2e63','Haskell':'#b47aff',
-  'Shell':'#4ade80','Vim script':'#7dff4d','Nix':'#7dc4ff'
-};
-const langColor = l => LANG_COLORS[l] || '#00e5ff';
-
-const LS = {
-  get(k, d) { try { return JSON.parse(localStorage.getItem('ghf_'+k)) ?? d } catch { return d } },
-  set(k, v) { try { localStorage.setItem('ghf_'+k, JSON.stringify(v)) } catch {} },
-  del(k) { try { localStorage.removeItem('ghf_'+k) } catch {} }
-};
-
-const state = {
-  lang: '', sort: '', stars: '', age: '', size: '',
-  page: 1, per: 12, total: 0, q: '',
-  busy: false,
-  view: LS.get('view', 'grid'),
-  density: LS.get('density', 'comfortable'),
-  token: sessionStorage.getItem('ghf_tok') || '',
-  favs: LS.get('favs', []),
-  hist: LS.get('hist', []),
-  presets: LS.get('presets', []),
-  notes: LS.get('notes', {}),
-  seen: LS.get('seen', {}),
-  watchTimer: null,
-  watchQuery: '',
-  compare: [],
-  rate: null
-};
-
-const savedTheme = LS.get('theme', null);
-if (savedTheme) document.documentElement.dataset.theme = savedTheme;
-
-async function ghSearch(q, page = 1) {
-  let query = q;
-  if (state.lang) query += ' language:' + state.lang;
-  if (state.stars) query += ' stars:>=' + state.stars;
-  if (state.age) {
-    const d = new Date();
-    d.setDate(d.getDate() - +state.age);
-    query += ' pushed:>' + d.toISOString().slice(0,10);
-  }
-  if (state.size) {
-    if (state.size === 'small') query += ' size:<1000';
-    else if (state.size === 'medium') query += ' size:1000..50000';
-    else if (state.size === 'large') query += ' size:>50000';
-  }
-  const p = new URLSearchParams({ q: query, per_page: state.per, page });
-  if (state.sort) { p.set('sort', state.sort); p.set('order', 'desc'); }
-  const h = { Accept: 'application/vnd.github+json' };
-  if (state.token) h.Authorization = 'Bearer ' + state.token;
-  const r = await fetch('https://api.github.com/search/repositories?' + p, { headers: h });
-  const remaining = r.headers.get('X-RateLimit-Remaining');
-  const limit = r.headers.get('X-RateLimit-Limit');
-  if (remaining !== null) {
-    state.rate = remaining + '/' + (limit || '?');
-    $('#rate').textContent = state.rate;
-  }
-  const j = await r.json();
-  if (!r.ok) throw new Error(j.message || ('HTTP ' + r.status));
-  return j;
-}
-
-async function ghRepo(full) {
-  const h = { Accept: 'application/vnd.github+json' };
-  if (state.token) h.Authorization = 'Bearer ' + state.token;
-  const r = await fetch('https://api.github.com/repos/' + full, { headers: h });
-  if (!r.ok) return null;
-  return r.json();
-}
-
-async function ghReadme(full) {
-  const h = { Accept: 'application/vnd.github.raw' };
-  if (state.token) h.Authorization = 'Bearer ' + state.token;
-  const r = await fetch('https://api.github.com/repos/' + full + '/readme', { headers: h });
-  if (!r.ok) return '';
-  return r.text();
-}
-
-async function ghReleases(full) {
-  const h = { Accept: 'application/vnd.github+json' };
-  if (state.token) h.Authorization = 'Bearer ' + state.token;
-  const r = await fetch('https://api.github.com/repos/' + full + '/releases?per_page=3', { headers: h });
-  if (!r.ok) return [];
-  return r.json();
-}
-
-async function ghContributors(full) {
-  const h = { Accept: 'application/vnd.github+json' };
-  if (state.token) h.Authorization = 'Bearer ' + state.token;
-  const r = await fetch('https://api.github.com/repos/' + full + '/contributors?per_page=5', { headers: h });
-  if (!r.ok) return [];
-  return r.json();
-}
-
-async function ghFile(full, path) {
-  const h = { Accept: 'application/vnd.github.raw' };
-  if (state.token) h.Authorization = 'Bearer ' + state.token;
-  const r = await fetch('https://api.github.com/repos/' + full + '/contents/' + path, { headers: h });
-  if (!r.ok) return '';
-  return r.text();
-}
-
-function pushHist(q) {
-  state.hist = [q, ...state.hist.filter(x => x !== q)].slice(0, 50);
-  LS.set('hist', state.hist);
-}
-
-function isFav(fn) { return state.favs.some(f => f.full_name === fn); }
-
-function toggleFav(r) {
-  const i = state.favs.findIndex(f => f.full_name === r.full_name);
-  if (i >= 0) state.favs.splice(i, 1);
-  else state.favs.unshift({
-    full_name: r.full_name, html_url: r.html_url,
-    description: r.description, stars: r.stargazers_count,
-    forks: r.forks_count, language: r.language,
-    owner: r.owner?.avatar_url, added: Date.now()
-  });
-  state.favs = state.favs.slice(0, 200);
-  LS.set('favs', state.favs);
-  $('#favc').textContent = state.favs.length;
-}
-
-let toastT;
-function toast(msg) {
-  const t = $('#toast');
-  t.textContent = msg;
-  t.classList.add('on');
-  clearTimeout(toastT);
-  toastT = setTimeout(() => t.classList.remove('on'), 1800);
-}
-
-function highlight(text, q) {
-  if (!q) return esc(text);
-  const words = q.split(/\s+/).filter(w => w.length > 1);
-  let out = esc(text);
-  words.forEach(w => {
-    const re = new RegExp('(' + w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
-    out = out.replace(re, '<mark>$1</mark>');
-  });
-  return out;
-}
-
-function escHtml(s) {
-  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
-
-function md(src) {
-  if (!src) return '';
-  let s = src.replace(/\r\n/g, '\n');
-
-  const codeBlocks = [];
-  s = s.replace(/```(\w*)\n([\s\S]*?)```/g, (m, lang, code) => {
-    codeBlocks.push('<pre class="md-code"><code>' + escHtml(code) + '</code></pre>');
-    return '\u0001B' + (codeBlocks.length - 1) + '\u0001B';
-  });
-
-  s = s.replace(/<!--[\s\S]*?-->/g, '');
-  s = s.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '');
-  s = s.replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, '');
-  s = s.replace(/<iframe\b[^>]*>[\s\S]*?<\/iframe>/gi, '');
-  s = s.replace(/<object\b[^>]*>[\s\S]*?<\/object>/gi, '');
-  s = s.replace(/<embed\b[^>]*>/gi, '');
-  s = s.replace(/<form\b[^>]*>[\s\S]*?<\/form>/gi, '');
-
-  const tags = [];
-  s = s.replace(/<\/?[a-zA-Z][a-zA-Z0-9-]*(?:\s[^>]*)?\/?>/g, tag => {
-    let clean = tag
-      .replace(/\s+on\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')
-      .replace(/(href|src)\s*=\s*(?:"javascript:[^"]*"|'javascript:[^']*')/gi, '$1="about:blank"');
-    tags.push(clean);
-    return '\u0001T' + (tags.length - 1) + '\u0001T';
-  });
-
-  s = s.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-
-  s = s.replace(/`([^`\n]+)`/g, '<code class="md-inline">$1</code>');
-
-  s = s.replace(/!\[([^\]]*)\]\(([^)\s]+)[^)]*\)/g,
-    '<img class="md-img" src="$2" alt="$1" loading="lazy">');
-  s = s.replace(/\[([^\]]+)\]\(([^)\s]+)[^)]*\)/g,
-    '<a class="md-a" href="$2" target="_blank" rel="noopener">$1</a>');
-
-  s = s.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
-  s = s.replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>');
-  s = s.replace(/__([^_\n]+)__/g, '<strong>$1</strong>');
-  s = s.replace(/(^|[^_])_([^_\n]+)_/g, '$1<em>$2</em>');
-
-  s = s.replace(/^######\s+(.+)$/gm, '<h6>$1</h6>');
-  s = s.replace(/^#####\s+(.+)$/gm, '<h5>$1</h5>');
-  s = s.replace(/^####\s+(.+)$/gm, '<h4>$1</h4>');
-  s = s.replace(/^###\s+(.+)$/gm, '<h3>$1</h3>');
-  s = s.replace(/^##\s+(.+)$/gm, '<h2>$1</h2>');
-  s = s.replace(/^#\s+(.+)$/gm, '<h1>$1</h1>');
-
-  s = s.replace(/^[-*_]{3,}\s*$/gm, '<hr class="md-hr">');
-  s = s.replace(/^>\s?(.+)$/gm, '<blockquote class="md-quote">$1</blockquote>');
-
-  s = s.replace(/(<a class="md-a"[^>]*>\s*<img[^>]*>\s*<\/a>\s*){2,}/g,
-    m => '<div class="md-badges">' + m + '</div>');
-
-  s = s.replace(/^[-*]\s+\[x\]\s+(.+)$/gm, '<li class="md-task done">$1</li>');
-  s = s.replace(/^[-*]\s+\[\s\]\s+(.+)$/gm, '<li class="md-task">$1</li>');
-
-  s = s.replace(/(^[-*]\s+.+(\n[-*]\s+.+)*)/gm, m => {
-    const items = m.split('\n').map(l => l.replace(/^[-*]\s+/, ''));
-    return '<ul class="md-ul">' + items.map(i => '<li>' + i + '</li>').join('') + '</ul>';
-  });
-  s = s.replace(/(^\d+\.\s+.+(\n\d+\.\s+.+)*)/gm, m => {
-    const items = m.split('\n').map(l => l.replace(/^\d+\.\s+/, ''));
-    return '<ol class="md-ol">' + items.map(i => '<li>' + i + '</li>').join('') + '</ol>';
-  });
-
-  s = s.split('\n').map(line => {
-    const t = line.trim();
-    if (!t) return '';
-    if (/^(?:\u0001[TB]\d+\u0001[TB])+\s*$/.test(t)) return line;
-    if (/^<(h\d|p|ul|ol|li|pre|blockquote|hr|div|section|table|details|figure|article|center)/i.test(t)) return line;
-    if (/^<\//.test(t)) return line;
-    return '<p class="md-p">' + line + '</p>';
-  }).join('\n');
-
-  s = s.replace(/\u0001B(\d+)\u0001B/g, (m, i) => codeBlocks[+i]);
-  s = s.replace(/\u0001T(\d+)\u0001T/g, (m, i) => tags[+i]);
-
-  return s;
-}
-
-function card(r, i) {
-  const c = document.createElement('article');
-  c.className = 'card';
-  c.dataset.fn = r.full_name;
-  c.style.animationDelay = (i * 30) + 'ms';
-  const fav = isFav(r.full_name);
-  const inCompare = state.compare.includes(r.full_name);
-  const note = state.notes[r.full_name] || '';
-  c.innerHTML = `
-    <div class="card-head">
-      <img class="avatar" src="${esc(r.owner?.avatar_url || '')}" alt="" loading="lazy">
-      <a class="repo" href="${esc(r.html_url)}" target="_blank" rel="noopener">${highlight(r.full_name, state.q)}</a>
-      <button class="fav ${fav?'on':''}" title="favorite" type="button">${fav?'★':'☆'}</button>
-      <button class="cmp ${inCompare?'on':''}" title="compare" type="button">⊕</button>
-    </div>
-    <p class="desc">${highlight(r.description || '—', state.q)}</p>
-    ${r.topics && r.topics.length ? `<div class="topics">${r.topics.slice(0,4).map(t => `<span class="topic">#${esc(t)}</span>`).join('')}</div>` : ''}
-    ${note ? `<div class="note">📝 ${esc(note)}</div>` : ''}
-    <div class="card-foot">
-      ${r.language ? `<span class="pill" style="--lc:${langColor(r.language)}">${esc(r.language)}</span>` : ''}
-      <span class="metric">★ ${fmt(r.stargazers_count)}</span>
-      <span class="metric">⌥ ${fmt(r.forks_count)}</span>
-      <span class="metric">! ${fmt(r.open_issues_count)}</span>
-      <span class="metric dim">◷ ${ago(r.updated_at)}</span>
-    </div>
-    <div class="card-actions">
-      <a class="act" href="${esc(r.html_url)}" target="_blank" rel="noopener">OPEN ↗</a>
-      <button class="act copy" type="button">COPY</button>
-      <button class="act clone" type="button">CLONE</button>
-      <button class="act details" type="button">INFO</button>
-    </div>`;
-  c.querySelector('.fav').addEventListener('click', e => {
-    e.preventDefault();
-    toggleFav(r);
-    e.target.classList.toggle('on');
-    e.target.textContent = e.target.classList.contains('on') ? '★' : '☆';
-    toast(isFav(r.full_name) ? '★ saved' : 'removed');
-  });
-  c.querySelector('.cmp').addEventListener('click', e => {
-    e.preventDefault();
-    const i = state.compare.indexOf(r.full_name);
-    if (i >= 0) state.compare.splice(i, 1);
-    else state.compare.push(r.full_name);
-    e.target.classList.toggle('on');
-    toast(state.compare.length + ' selected');
-  });
-  c.querySelector('.copy').addEventListener('click', async e => {
-    e.preventDefault();
-    await navigator.clipboard.writeText(r.html_url);
-    toast('url copied');
-  });
-  c.querySelector('.clone').addEventListener('click', async e => {
-    e.preventDefault();
-    const url = r.clone_url || r.html_url + '.git';
-    await navigator.clipboard.writeText('git clone ' + url);
-    toast('clone cmd copied');
-  });
-  c.querySelector('.details').addEventListener('click', e => {
-    e.preventDefault();
-    openRepoModal(r);
-  });
-  c.querySelector('.repo').addEventListener('click', e => {
-    e.preventDefault();
-    openRepoModal(r);
-  });
-  return c;
-}
-
-function render(items, append = false) {
-  const grid = $('#grid');
-  if (!append) grid.innerHTML = '';
-  if (!items.length && !append) {
-    grid.innerHTML = '<p class="empty">// no results</p>';
-    $('#stats-bar').hidden = true;
-    return;
-  }
-  items.forEach((r, i) => grid.appendChild(card(r, i)));
-  if (!append) showLangChart(items);
-}
-
-function showLangChart(items) {
-  const bar = $('#stats-bar');
-  if (!items || items.length < 2) { bar.hidden = true; return; }
-  const counts = {};
-  items.forEach(r => {
-    const l = r.language || 'Other';
-    counts[l] = (counts[l] || 0) + 1;
-  });
-  const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]);
-  bar.innerHTML = '';
-  const label = document.createElement('span');
-  label.className = 'stat-pill';
-  label.innerHTML = '<b>// lang</b>';
-  bar.appendChild(label);
-  sorted.forEach(([l, n]) => {
-    const el = document.createElement('span');
-    el.className = 'stat-pill';
-    el.innerHTML = `<span class="swatch" style="background:${langColor(l)};box-shadow:0 0 6px ${langColor(l)}"></span>${esc(l)} <b>${n}</b>`;
-    el.addEventListener('click', () => {
-      setChip('#langs', l.toLowerCase());
-      state.lang = l.toLowerCase();
-      if (state.q) run(state.q);
-    });
-    bar.appendChild(el);
-  });
-  bar.hidden = false;
-}
-
-async function run(q, page = 1) {
-  if (state.busy || !q.trim()) return;
-  state.busy = true;
-  state.q = q;
-  state.page = page;
-  $('#status').innerHTML = '<span class="dim">[ … ]</span>';
-  try {
-    const d = await ghSearch(q.trim(), page);
-    state.total = d.total_count || 0;
-    $('#status').innerHTML = `<span class="ok">[ ok ]</span> ${fmt(state.total)} repos <span class="dim">// ${(d.items||[]).length}</span>`;
-    render(d.items || [], page > 1);
-    $('#more').hidden = (d.items||[]).length < state.per || page * state.per >= Math.min(state.total, 1000);
-    if (page === 1) pushHist(q.trim());
-    const url = new URL(location);
-    url.searchParams.set('q', q.trim());
-    history.replaceState(null, '', url);
-  } catch (e) {
-    $('#status').innerHTML = '<span class="err-mark">[ err ]</span> ' + esc(e.message);
-  } finally {
-    state.busy = false;
-  }
-}
-
-function setChip(sel, val) {
-  $$(sel + ' .chip').forEach(c => c.classList.toggle('on', c.dataset.v === val));
-}
-
-function resetFilters() {
-  state.lang = '';
-  state.sort = '';
-  state.stars = '';
-  state.age = '';
-  state.size = '';
-  setChip('#langs', '');
-  setChip('#sorts', '');
-  setChip('#stars', '');
-  setChip('#age', '');
-  setChip('#size', '');
-  if ($('#q').value.trim()) run($('#q').value);
-  else toast('cleared');
-}
-
-function openDrawer(title, bodyFn, actions) {
-  $('#drawer-title').textContent = title;
-  $('#drawer-body').innerHTML = '';
-  $('#drawer-actions').innerHTML = '';
-  if (actions) actions($('#drawer-actions'));
-  bodyFn($('#drawer-body'));
-  $('#drawer').hidden = false;
-  requestAnimationFrame(() => $('#drawer').classList.add('on'));
-}
-function closeDrawer() {
-  const d = $('#drawer');
-  d.classList.remove('on');
-  setTimeout(() => d.hidden = true, 200);
-}
-
-async function openRepoModal(r) {
-  const m = $('#modal');
-  const body = $('#modal-body');
-  body.innerHTML = `
-    <div class="m-head">
-      <img class="m-av" src="${esc(r.owner?.avatar_url||'')}" alt="">
-      <div style="flex:1;min-width:0">
-        <h3 class="m-title">${esc(r.full_name)}</h3>
-        <div class="m-owner">// ${esc(r.owner?.login||'')}</div>
-        <p class="m-desc">${esc(r.description||'—')}</p>
-      </div>
-    </div>
-    <div class="m-stats">
-      <div class="m-stat"><div class="v">${fmt(r.stargazers_count)}</div><div class="l">stars</div></div>
-      <div class="m-stat"><div class="v">${fmt(r.forks_count)}</div><div class="l">forks</div></div>
-      <div class="m-stat"><div class="v">${fmt(r.open_issues_count)}</div><div class="l">issues</div></div>
-      <div class="m-stat"><div class="v">${fmt(r.watchers_count)}</div><div class="l">watchers</div></div>
-      <div class="m-stat"><div class="v">${fmtSize(r.size)}</div><div class="l">size</div></div>
-      <div class="m-stat"><div class="v">${r.license?.spdx_id || '—'}</div><div class="l">license</div></div>
-    </div>
-    ${r.topics && r.topics.length ? `<div class="m-topics">${r.topics.map(t => `<a class="m-topic" href="https://github.com/topics/${esc(t)}" target="_blank" rel="noopener">#${esc(t)}</a>`).join('')}</div>` : ''}
-    <div id="m-extra"></div>
-    <div id="m-readme" class="m-readme"><div class="m-loading">// loading…</div></div>
-    <div class="m-actions">
-      <a class="m-btn primary" href="${esc(r.html_url)}" target="_blank" rel="noopener">OPEN ↗</a>
-      <button class="m-btn" id="m-fav" type="button">${isFav(r.full_name) ? '★ UNFAV' : '☆ FAV'}</button>
-      <button class="m-btn" id="m-copy" type="button">COPY URL</button>
-      <button class="m-btn" id="m-clone" type="button">COPY CLONE</button>
-      <button class="m-btn" id="m-note" type="button">NOTE</button>
-      <button class="m-btn" id="m-files" type="button">FILES</button>
-      <a class="m-btn" href="${esc(r.html_url)}/issues" target="_blank" rel="noopener">ISSUES</a>
-      <a class="m-btn" href="${esc(r.html_url)}/releases" target="_blank" rel="noopener">RELEASES</a>
-    </div>`;
-  m.hidden = false;
-  requestAnimationFrame(() => m.classList.add('on'));
-
-  body.querySelector('#m-fav').addEventListener('click', () => {
-    toggleFav(r);
-    const on = isFav(r.full_name);
-    body.querySelector('#m-fav').textContent = on ? '★ UNFAV' : '☆ FAV';
-    toast(on ? '★ saved' : 'removed');
-  });
-  body.querySelector('#m-copy').addEventListener('click', async () => {
-    await navigator.clipboard.writeText(r.html_url);
-    toast('url copied');
-  });
-  body.querySelector('#m-clone').addEventListener('click', async () => {
-    await navigator.clipboard.writeText('git clone ' + (r.clone_url || r.html_url + '.git'));
-    toast('clone copied');
-  });
-  body.querySelector('#m-note').addEventListener('click', () => {
-    const cur = state.notes[r.full_name] || '';
-    const note = prompt('note for ' + r.full_name, cur);
-    if (note !== null) {
-      if (note.trim()) state.notes[r.full_name] = note.trim();
-      else delete state.notes[r.full_name];
-      LS.set('notes', state.notes);
-      toast('note saved');
-    }
-  });
-  body.querySelector('#m-files').addEventListener('click', () => openFilesModal(r));
-
-  const [readme, releases, contributors] = await Promise.all([
-    ghReadme(r.full_name),
-    ghReleases(r.full_name),
-    ghContributors(r.full_name)
-  ]);
-
-  const extra = body.querySelector('#m-extra');
-  if (releases.length) {
-    extra.innerHTML += `<div class="m-section"><div class="m-section-title">// releases</div>${releases.map(rel => `
-      <a class="m-release" href="${esc(rel.html_url)}" target="_blank" rel="noopener">
-        <span class="m-rel-tag">${esc(rel.tag_name)}</span>
-        <span class="m-rel-name">${esc(rel.name || '')}</span>
-        <span class="m-rel-date">${ago(rel.published_at)}</span>
-      </a>`).join('')}</div>`;
-  }
-  if (contributors.length) {
-    extra.innerHTML += `<div class="m-section"><div class="m-section-title">// contributors</div><div class="m-contrib">${contributors.map(c => `
-      <a class="m-contrib-item" href="${esc(c.html_url)}" target="_blank" rel="noopener" title="${esc(c.login)}">
-        <img src="${esc(c.avatar_url)}" alt="">
-        <span>${esc(c.login)}</span>
-      </a>`).join('')}</div></div>`;
-  }
-
-  const readmeEl = body.querySelector('#m-readme');
-  if (!readme) {
-    readmeEl.innerHTML = '<div class="m-loading">// no readme</div>';
-    return;
-  }
-  readmeEl.innerHTML = '<div class="md">' + md(readme.slice(0, 16000)) +
-    (readme.length > 16000 ? '<p class="md-p"><em>… truncated</em></p>' : '') + '</div>';
-}
-
-async function openFilesModal(r) {
-  const m = $('#modal3');
-  const body = $('#modal3-body');
-  body.innerHTML = `
-    <h3 class="m-title">◇ FILE BROWSER</h3>
-    <div class="m-owner">// ${esc(r.full_name)}</div>
-    <div id="fb-path" class="fb-path">/</div>
-    <div id="fb-list" class="fb-list"><div class="m-loading">// loading…</div></div>`;
-  m.hidden = false;
-  requestAnimationFrame(() => m.classList.add('on'));
-
-  const pathEl = body.querySelector('#fb-path');
-  const listEl = body.querySelector('#fb-list');
-  let currentPath = '';
-
-  async function load(path) {
-    currentPath = path;
-    pathEl.textContent = '/' + (path || '');
-    listEl.innerHTML = '<div class="m-loading">// loading…</div>';
-    const h = { Accept: 'application/vnd.github+json' };
-    if (state.token) h.Authorization = 'Bearer ' + state.token;
-    const url = 'https://api.github.com/repos/' + r.full_name + '/contents/' + path;
-    const res = await fetch(url, { headers: h });
-    if (!res.ok) { listEl.innerHTML = '<div class="m-loading">// n/a</div>'; return; }
-    const items = await res.json();
-    listEl.innerHTML = '';
-    if (path) {
-      const up = document.createElement('button');
-      up.className = 'fb-item fb-dir';
-      up.type = 'button';
-      up.innerHTML = '<span class="fb-icon">↩</span> ..';
-      up.addEventListener('click', () => {
-        const parent = path.split('/').slice(0, -1).join('/');
-        load(parent);
-      });
-      listEl.appendChild(up);
-    }
-    items.sort((a, b) => {
-      if (a.type === b.type) return a.name.localeCompare(b.name);
-      return a.type === 'dir' ? -1 : 1;
-    });
-    items.forEach(item => {
-      const el = document.createElement('button');
-      el.type = 'button';
-      el.className = 'fb-item' + (item.type === 'dir' ? ' fb-dir' : ' fb-file');
-      const icon = item.type === 'dir' ? '▸' : '·';
-      el.innerHTML = `<span class="fb-icon">${icon}</span> <span class="fb-name">${esc(item.name)}</span> <span class="fb-size">${item.type === 'file' ? fmtSize(Math.ceil(item.size/1024)) : ''}</span>`;
-      el.addEventListener('click', async () => {
-        if (item.type === 'dir') {
-          load(item.path);
-        } else {
-          const content = await ghFile(r.full_name, item.path);
-          body.querySelector('#fb-list').innerHTML = `
-            <button class="fb-item fb-dir" id="fb-back" type="button"><span class="fb-icon">↩</span> ..</button>
-            <pre class="fb-view">${escHtml(content.slice(0, 8000))}${content.length > 8000 ? '\n\n… truncated' : ''}</pre>`;
-          body.querySelector('#fb-back').addEventListener('click', () => load(currentPath));
-        }
-      });
-      listEl.appendChild(el);
-    });
-  }
-  load('');
-}
-
-function closeModal() {
-  const m = $('#modal');
-  m.classList.remove('on');
-  setTimeout(() => m.hidden = true, 200);
-}
-function closeModal2() {
-  const m = $('#modal2');
-  m.classList.remove('on');
-  setTimeout(() => m.hidden = true, 200);
-}
-function closeModal3() {
-  const m = $('#modal3');
-  m.classList.remove('on');
-  setTimeout(() => m.hidden = true, 200);
-}
-
-function exportData(type, data, filename) {
-  let blob;
-  if (type === 'json') {
-    blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-  } else if (type === 'csv') {
-    const rows = [['name','url','stars','forks','language','updated']];
-    data.forEach(r => rows.push([r.full_name, r.html_url, r.stargazers_count, r.forks_count, r.language || '', (r.updated_at||'').slice(0,10)]));
-    blob = new Blob([rows.map(r => r.map(v => '"' + String(v).replace(/"/g,'""') + '"').join(',')).join('\n')], { type: 'text/csv' });
-  } else {
-    blob = new Blob([data.map(r => r.full_name + '\t' + r.html_url).join('\n')], { type: 'text/plain' });
-  }
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = filename;
-  a.click();
-}
-
-$('#nav-favs').addEventListener('click', e => {
-  e.preventDefault();
-  closeNav();
-  openDrawer('★ FAVORITES [' + state.favs.length + ']', box => {
-    if (!state.favs.length) { box.innerHTML = '<p class="empty">// empty</p>'; return; }
-    state.favs.forEach((f, i) => {
-      const wrap = document.createElement('div');
-      wrap.className = 'row-item-col';
-      wrap.innerHTML = `
-        <a class="row-item" href="${esc(f.html_url)}" target="_blank" rel="noopener">
-          <img src="${esc(f.owner||'')}" alt="" class="av">
-          <div class="row-txt">
-            <div class="row-title">${esc(f.full_name)}</div>
-            <div class="row-sub">${esc(f.description||'')}</div>
-          </div>
-          <span class="row-met">★ ${fmt(f.stars)}</span>
-        </a>
-        <textarea class="fav-note" placeholder="// note" data-fn="${esc(f.full_name)}">${esc(state.notes[f.full_name] || '')}</textarea>
-        <div class="row-tools">
-          <button class="danger" data-rm="${esc(f.full_name)}" type="button">REMOVE</button>
-          <button data-copy="${esc(f.full_name)}" type="button">COPY URL</button>
-        </div>`;
-      wrap.querySelector('.fav-note').addEventListener('input', ev => {
-        const fn = ev.target.dataset.fn;
-        if (ev.target.value.trim()) state.notes[fn] = ev.target.value.trim();
-        else delete state.notes[fn];
-        LS.set('notes', state.notes);
-      });
-      wrap.querySelector('[data-rm]').addEventListener('click', ev => {
-        const fn = ev.target.dataset.rm;
-        state.favs = state.favs.filter(x => x.full_name !== fn);
-        LS.set('favs', state.favs);
-        $('#favc').textContent = state.favs.length;
-        closeDrawer();
-      });
-      wrap.querySelector('[data-copy]').addEventListener('click', ev => {
-        const fv = state.favs.find(x => x.full_name === ev.target.dataset.copy);
-        if (fv) { navigator.clipboard.writeText(fv.html_url); toast('copied'); }
-      });
-      box.appendChild(wrap);
-    });
-  }, act => {
-    act.innerHTML = `
-      <button class="icon-btn" id="fav-export" type="button">EXPORT</button>
-      <button class="icon-btn danger" id="fav-clear" type="button">CLEAR</button>`;
-    act.querySelector('#fav-export').addEventListener('click', () => {
-      exportData('json', state.favs, 'ghfind-favorites.json');
-    });
-    act.querySelector('#fav-clear').addEventListener('click', () => {
-      if (!confirm('clear all favorites?')) return;
-      state.favs = [];
-      LS.set('favs', []);
-      $('#favc').textContent = 0;
-      closeDrawer();
-    });
-  });
-});
-
-$('#nav-hist').addEventListener('click', e => {
-  e.preventDefault();
-  closeNav();
-  openDrawer('▤ HISTORY [' + state.hist.length + ']', box => {
-    if (!state.hist.length) { box.innerHTML = '<p class="empty">// empty</p>'; return; }
-    state.hist.forEach(h => {
-      const el = document.createElement('button');
-      el.type = 'button';
-      el.className = 'row-item btn-row';
-      el.innerHTML = `<div class="row-txt"><div class="row-title"><span class="dia">◇</span> ${esc(h)}</div></div>`;
-      el.addEventListener('click', () => {
-        $('#q').value = h;
-        closeDrawer();
-        run(h);
-      });
-      box.appendChild(el);
-    });
-  }, act => {
-    act.innerHTML = `<button class="icon-btn danger" id="hist-clear" type="button">CLEAR</button>`;
-    act.querySelector('#hist-clear').addEventListener('click', () => {
-      if (!confirm('clear history?')) return;
-      state.hist = [];
-      LS.set('hist', []);
-      closeDrawer();
-    });
-  });
-});
-
-$('#nav-presets').addEventListener('click', e => {
-  e.preventDefault();
-  closeNav();
-  openDrawer('◆ PRESETS [' + state.presets.length + ']', box => {
-    if (!state.presets.length) {
-      box.innerHTML = '<p class="empty">// no presets</p>';
-      return;
-    }
-    state.presets.forEach((p, i) => {
-      const el = document.createElement('div');
-      el.className = 'row-item-col';
-      el.innerHTML = `
-        <button class="row-item btn-row" data-run="${i}" type="button">
-          <div class="row-txt">
-            <div class="row-title"><span class="dia">◆</span> ${esc(p.name)}</div>
-            <div class="row-sub">${esc(p.q)}${p.lang ? ' · '+esc(p.lang) : ''}${p.sort ? ' · '+esc(p.sort) : ''}</div>
-          </div>
-        </button>
-        <div class="row-tools">
-          <button data-del="${i}" class="danger" type="button">DELETE</button>
-        </div>`;
-      el.querySelector('[data-run]').addEventListener('click', () => {
-        $('#q').value = p.q;
-        state.lang = p.lang || '';
-        state.sort = p.sort || '';
-        state.stars = p.stars || '';
-        state.age = p.age || '';
-        state.size = p.size || '';
-        setChip('#langs', state.lang);
-        setChip('#sorts', state.sort);
-        setChip('#stars', state.stars);
-        setChip('#age', state.age);
-        setChip('#size', state.size);
-        closeDrawer();
-        run(p.q);
-      });
-      el.querySelector('[data-del]').addEventListener('click', () => {
-        state.presets.splice(i, 1);
-        LS.set('presets', state.presets);
-        closeDrawer();
-      });
-      box.appendChild(el);
-    });
-  });
-});
-
-$('#nav-settings').addEventListener('click', e => {
-  e.preventDefault();
-  closeNav();
-  openDrawer('⚙ SETTINGS', box => {
-    const tok = state.token ? state.token.slice(0,8) + '…' : '—';
-    box.innerHTML = `
-      <div class="setting-row">
-        <div>
-          <div class="setting-k">GITHUB TOKEN</div>
-          <div class="setting-v">${esc(tok)}</div>
+      <!-- Filters -->
+      <div class="filters">
+        <div class="chips" id="langs">
+          <span class="lbl">Language:</span>
+          <button class="chip on" data-v="">Any</button>
+          <button class="chip" data-v="lua">Lua</button>
+          <button class="chip" data-v="python">Python</button>
+          <button class="chip" data-v="rust">Rust</button>
+          <button class="chip" data-v="go">Go</button>
+          <button class="chip" data-v="javascript">JS</button>
+          <button class="chip" data-v="typescript">TS</button>
         </div>
-        <button class="icon-btn" id="set-tok" type="button">${state.token ? 'CHANGE' : 'ADD'}</button>
-      </div>
-      <div class="setting-row">
-        <div>
-          <div class="setting-k">THEME</div>
-          <div class="setting-v">${document.documentElement.dataset.theme || 'dark'}</div>
+        <div class="chips" id="sorts">
+          <span class="lbl">Sort:</span>
+          <button class="chip on" data-v="">Best</button>
+          <button class="chip" data-v="stars">Stars</button>
+          <button class="chip" data-v="forks">Forks</button>
+          <button class="chip" data-v="updated">Fresh</button>
         </div>
-        <button class="icon-btn" id="set-theme" type="button">TOGGLE</button>
       </div>
-      <div class="setting-row">
-        <div>
-          <div class="setting-k">VIEW</div>
-          <div class="setting-v">${state.view}</div>
-        </div>
-        <button class="icon-btn" id="set-view" type="button">TOGGLE</button>
-      </div>
-      <div class="setting-row">
-        <div>
-          <div class="setting-k">DENSITY</div>
-          <div class="setting-v">${state.density}</div>
-        </div>
-        <button class="icon-btn" id="set-density" type="button">TOGGLE</button>
-      </div>
-      <div class="setting-row">
-        <div>
-          <div class="setting-k">SEEN CACHE</div>
-          <div class="setting-v">${Object.keys(state.seen).length}</div>
-        </div>
-        <button class="icon-btn danger" id="set-clear-seen" type="button">CLEAR</button>
-      </div>
-      <div class="setting-row">
-        <div>
-          <div class="setting-k">ALL DATA</div>
-          <div class="setting-v">favs · hist · presets · notes</div>
-        </div>
-        <button class="icon-btn danger" id="set-reset" type="button">RESET</button>
-      </div>
-      <div class="setting-row">
-        <div>
-          <div class="setting-k">EXPORT</div>
-          <div class="setting-v">json backup</div>
-        </div>
-        <button class="icon-btn" id="set-export" type="button">EXPORT</button>
-      </div>`;
-    box.querySelector('#set-tok').addEventListener('click', () => {
-      const t = prompt('paste token (blank = remove)', state.token ? '••••••••' : '');
-      if (t === null) return;
-      if (t === '' || t.match(/^•+$/)) {
-        state.token = '';
-        sessionStorage.removeItem('ghf_tok');
-        toast('token removed');
-      } else {
-        state.token = t.trim();
-        sessionStorage.setItem('ghf_tok', state.token);
-        toast('token saved');
-      }
-      closeDrawer();
-    });
-    box.querySelector('#set-theme').addEventListener('click', () => {
-      const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
-      document.documentElement.dataset.theme = next;
-      LS.set('theme', next);
-      closeDrawer();
-    });
-    box.querySelector('#set-view').addEventListener('click', () => {
-      state.view = state.view === 'grid' ? 'list' : 'grid';
-      LS.set('view', state.view);
-      $('#grid').classList.toggle('list', state.view === 'list');
-      closeDrawer();
-    });
-    box.querySelector('#set-density').addEventListener('click', () => {
-      state.density = state.density === 'comfortable' ? 'compact' : 'comfortable';
-      LS.set('density', state.density);
-      document.body.classList.toggle('compact', state.density === 'compact');
-      closeDrawer();
-    });
-    box.querySelector('#set-clear-seen').addEventListener('click', () => {
-      state.seen = {};
-      LS.set('seen', {});
-      toast('cleared');
-      closeDrawer();
-    });
-    box.querySelector('#set-reset').addEventListener('click', () => {
-      if (!confirm('reset everything?')) return;
-      LS.del('favs'); LS.del('hist'); LS.del('presets'); LS.del('notes'); LS.del('seen');
-      state.favs = []; state.hist = []; state.presets = []; state.notes = {}; state.seen = {};
-      $('#favc').textContent = 0;
-      toast('reset');
-      closeDrawer();
-    });
-    box.querySelector('#set-export').addEventListener('click', () => {
-      exportData('json', {
-        favorites: state.favs,
-        history: state.hist,
-        presets: state.presets,
-        notes: state.notes,
-        exported: new Date().toISOString()
-      }, 'ghfind-backup.json');
-      toast('exported');
-    });
-  });
-});
+    </section>
 
-$('#nav-install').addEventListener('click', e => {
-  e.preventDefault();
-  closeNav();
-  const cmd = 'curl -sSL -o ghfind.lua https://raw.githubusercontent.com/7helix/ghfind/main/ghfind.lua';
-  navigator.clipboard.writeText(cmd).then(() => {
-    toast('install cmd copied');
-  }).catch(() => {
-    prompt('copy this command', cmd);
-  });
-});
+    <div id="status" class="status" hidden></div>
+    <div id="grid" class="grid"></div>
+  </main>
 
-$('#help').addEventListener('click', () => {
-  openDrawer('? KEYS', box => {
-    const rows = [
-      ['/', 'focus search'],
-      ['↵', 'run search'],
-      ['esc', 'close'],
-      ['r', 'random'],
-      ['t', 'trending'],
-      ['f', 'favorites'],
-      ['h', 'history'],
-      ['p', 'presets'],
-      ['s', 'settings'],
-      ['c', 'compare'],
-      ['v', 'grid/list'],
-      ['d', 'density'],
-      ['x', 'reset filters'],
-      ['?', 'this panel']
+  <!-- Modal for Repo Details -->
+  <div class="modal" id="repo-modal" hidden>
+    <div class="modal-back" id="modal-close"></div>
+    <div class="modal-panel">
+      <button class="modal-close-btn" id="modal-x">✕</button>
+      <div class="modal-body" id="modal-body"></div>
+    </div>
+  </div>
+
+  <!-- Drawer for Favorites -->
+  <div class="drawer" id="drawer" hidden>
+    <div class="drawer-back" id="drawer-close"></div>
+    <div class="drawer-panel">
+      <div class="drawer-head">
+        <h3>Favorites</h3>
+        <button class="modal-close-btn" id="drawer-x">✕</button>
+      </div>
+      <div class="drawer-body" id="drawer-body"></div>
+    </div>
+  </div>
+
+  <script>
+    const $ = s => document.querySelector(s);
+    const $$ = s => [...document.querySelectorAll(s)];
+    const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+    
+    // State
+    const state = { lang: '', sort: '', q: '', busy: false, favs: JSON.parse(localStorage.getItem('ghf_favs') || '[]') };
+
+    // --- 1. Map Animation Logic ---
+    const canvas = $('#map-canvas');
+    const ctx = canvas.getContext('2d');
+    let w, h, hubs = [], pulses = [];
+    const locations = [
+      [0.15, 0.3], [0.18, 0.35], [0.25, 0.3], [0.32, 0.3], [0.35, 0.35], 
+      [0.45, 0.3], [0.48, 0.35], [0.65, 0.45], [0.75, 0.35], [0.8, 0.4], [0.82, 0.25], [0.85, 0.8]
     ];
-    box.innerHTML = rows.map(([k, v]) => `
-      <div class="row-item">
-        <div class="row-txt">
-          <div class="row-title"><kbd>${k}</kbd></div>
-          <div class="row-sub">${v}</div>
-        </div>
-      </div>`).join('');
-  });
-});
 
-$('#drawer-close').addEventListener('click', closeDrawer);
-$('#drawer-back').addEventListener('click', closeDrawer);
-$('#modal-close').addEventListener('click', closeModal);
-$('#modal-back').addEventListener('click', closeModal);
-$('#modal2-close').addEventListener('click', closeModal2);
-$('#modal2-back').addEventListener('click', closeModal2);
-$('#modal3-close').addEventListener('click', closeModal3);
-$('#modal3-back').addEventListener('click', closeModal3);
+    function resize() {
+      w = canvas.width = window.innerWidth;
+      h = canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
 
-$('#scroll-search').addEventListener('click', () => {
-  document.getElementById('search').scrollIntoView({ behavior: 'smooth' });
-});
-
-$('#copy-install').addEventListener('click', async () => {
-  const cmd = 'curl -sSL -o ghfind.lua https://raw.githubusercontent.com/7helix/ghfind/main/ghfind.lua';
-  try {
-    await navigator.clipboard.writeText(cmd);
-    toast('install cmd copied');
-  } catch {
-    prompt('copy this command', cmd);
-  }
-});
-
-$('#go').addEventListener('click', () => { run($('#q').value); });
-$('#q').addEventListener('keydown', e => {
-  if (e.key === 'Enter') run($('#q').value);
-  if (e.key === 'Escape') { $('#q').value = ''; $('#q').blur(); }
-});
-
-$('#reset-filters').addEventListener('click', () => { resetFilters(); });
-$('#more').addEventListener('click', () => { state.page++; run(state.q, state.page); });
-
-$('#random').addEventListener('click', async () => {
-  const d = await ghSearch($('#q').value.trim() || 'lua');
-  const items = d.items || [];
-  if (!items.length) return toast('nothing');
-  const r = items[Math.floor(Math.random() * items.length)];
-  render([r]);
-  $('#status').innerHTML = '<span class="ok">[ ok ]</span> random';
-  $('#more').hidden = true;
-});
-
-$('#trend').addEventListener('click', () => {
-  const d = new Date(); d.setDate(d.getDate() - 7);
-  $('#q').value = 'created:>' + d.toISOString().slice(0,10);
-  state.sort = 'stars';
-  setChip('#sorts', 'stars');
-  run($('#q').value);
-});
-
-$('#watch').addEventListener('click', () => {
-  if (state.watchTimer) {
-    clearInterval(state.watchTimer);
-    state.watchTimer = null;
-    toast('stopped');
-    return;
-  }
-  const q = $('#q').value.trim();
-  if (!q) return toast('enter a query');
-  state.watchQuery = q;
-  toast('watching · 60s');
-  state.watchTimer = setInterval(async () => {
-    try {
-      const d = await ghSearch(state.watchQuery, 1);
-      const seenKey = state.watchQuery;
-      const prev = state.seen[seenKey] || [];
-      const fresh = (d.items || []).filter(r => !prev.includes(r.full_name));
-      if (fresh.length) {
-        state.seen[seenKey] = [...prev, ...fresh.map(r => r.full_name)].slice(-500);
-        LS.set('seen', state.seen);
-        toast('◉ ' + fresh.length + ' new');
-        if (Notification && Notification.permission === 'granted') {
-          new Notification('ghfind', { body: fresh.length + ' new for "' + state.watchQuery + '"' });
+    for (let x = 0; x < w; x += 20) {
+      for (let y = 0; y < h; y += 20) {
+        if (Math.random() > 0.7 && (x > w*0.1 && x < w*0.9 && y > h*0.2 && y < h*0.8)) {
+          hubs.push({ x, y, baseOpacity: Math.random() * 0.2 + 0.05, pulse: 0 });
         }
       }
-    } catch {}
-  }, 60000);
-  if (Notification && Notification.permission === 'default') {
-    Notification.requestPermission();
-  }
-});
-
-$('#compare').addEventListener('click', async () => {
-  if (state.compare.length < 2) {
-    toast('select 2+ with ⊕');
-    return;
-  }
-  $('#status').innerHTML = '<span class="dim">[ … ]</span>';
-  const repos = await Promise.all(state.compare.map(fn => ghRepo(fn)));
-  const valid = repos.filter(Boolean);
-  if (!valid.length) { toast('nothing'); return; }
-  const m = $('#modal2');
-  const body = $('#modal2-body');
-  const metrics = [
-    ['stars', r => fmt(r.stargazers_count)],
-    ['forks', r => fmt(r.forks_count)],
-    ['issues', r => fmt(r.open_issues_count)],
-    ['watchers', r => fmt(r.watchers_count)],
-    ['size', r => fmtSize(r.size)],
-    ['language', r => r.language || '—'],
-    ['license', r => r.license?.spdx_id || '—'],
-    ['created', r => (r.created_at||'').slice(0,10)],
-    ['updated', r => (r.pushed_at||'').slice(0,10)],
-    ['homepage', r => r.homepage || '—']
-  ];
-  body.innerHTML = `
-    <h3 class="m-title">⊕ COMPARE</h3>
-    <div class="cmp-grid" style="grid-template-columns: repeat(${valid.length+1}, minmax(0,1fr));">
-      <div class="cmp-cell cmp-head"></div>
-      ${valid.map(r => `<div class="cmp-cell cmp-head"><a href="${esc(r.html_url)}" target="_blank">${esc(r.full_name)}</a></div>`).join('')}
-      ${metrics.map(([label, fn]) => `
-        <div class="cmp-cell cmp-label">${label}</div>
-        ${valid.map(r => `<div class="cmp-cell">${esc(fn(r))}</div>`).join('')}
-      `).join('')}
-    </div>
-    <div class="m-actions" style="margin-top:1rem">
-      <button class="m-btn" id="cmp-clear" type="button">CLEAR</button>
-    </div>`;
-  m.hidden = false;
-  requestAnimationFrame(() => m.classList.add('on'));
-  body.querySelector('#cmp-clear').addEventListener('click', () => {
-    state.compare = [];
-    $$('.cmp.on').forEach(el => el.classList.remove('on'));
-    closeModal2();
-  });
-  $('#status').innerHTML = '';
-});
-
-$('#view').addEventListener('click', () => {
-  state.view = state.view === 'grid' ? 'list' : 'grid';
-  LS.set('view', state.view);
-  $('#grid').classList.toggle('list', state.view === 'list');
-  $('#view').innerHTML = state.view === 'grid' ? '▦ grid<kbd>v</kbd>' : '☰ list<kbd>v</kbd>';
-});
-
-$('#density').addEventListener('click', () => {
-  state.density = state.density === 'comfortable' ? 'compact' : 'comfortable';
-  LS.set('density', state.density);
-  document.body.classList.toggle('compact', state.density === 'compact');
-  $('#density').innerHTML = state.density === 'comfortable' ? '⊞ comfy<kbd>d</kbd>' : '⊟ compact<kbd>d</kbd>';
-});
-
-$('#theme').addEventListener('click', () => {
-  const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
-  document.documentElement.dataset.theme = next;
-  LS.set('theme', next);
-});
-
-$$('#langs .chip').forEach(c => c.addEventListener('click', () => {
-  state.lang = c.dataset.v;
-  setChip('#langs', c.dataset.v);
-  if ($('#q').value.trim()) run($('#q').value);
-}));
-$$('#sorts .chip').forEach(c => c.addEventListener('click', () => {
-  state.sort = c.dataset.v;
-  setChip('#sorts', c.dataset.v);
-  if ($('#q').value.trim()) run($('#q').value);
-}));
-$$('#stars .chip').forEach(c => c.addEventListener('click', () => {
-  state.stars = c.dataset.v;
-  setChip('#stars', c.dataset.v);
-  if ($('#q').value.trim()) run($('#q').value);
-}));
-$$('#age .chip').forEach(c => c.addEventListener('click', () => {
-  state.age = c.dataset.v;
-  setChip('#age', c.dataset.v);
-  if ($('#q').value.trim()) run($('#q').value);
-}));
-$$('#size .chip').forEach(c => c.addEventListener('click', () => {
-  state.size = c.dataset.v;
-  setChip('#size', c.dataset.v);
-  if ($('#q').value.trim()) run($('#q').value);
-}));
-
-function closeNav() {
-  const nav = document.getElementById('nav-links');
-  if (nav) nav.classList.remove('open');
-}
-
-document.addEventListener('click', function(e) {
-  const toggle = e.target.closest('#nav-toggle');
-  const nav = document.getElementById('nav-links');
-  
-  if (toggle) {
-    if (nav) nav.classList.toggle('open');
-    return;
-  }
-  
-  if (nav && nav.contains(e.target) && e.target.tagName === 'A') {
-    nav.classList.remove('open');
-    return;
-  }
-  
-  if (nav && nav.classList.contains('open')) {
-    if (!nav.contains(e.target)) {
-      nav.classList.remove('open');
     }
-  }
-});
 
-document.addEventListener('keydown', e => {
-  const tag = document.activeElement.tagName;
-  if (tag === 'INPUT' || tag === 'TEXTAREA') {
-    if (e.key === 'Escape') document.activeElement.blur();
-    return;
-  }
-  if (e.key === '/') { e.preventDefault(); $('#q').focus(); }
-  if (e.key === 'Escape') { closeModal(); closeModal2(); closeModal3(); closeDrawer(); closeNav(); }
-  if (e.key === 'r') $('#random').click();
-  if (e.key === 't') $('#trend').click();
-  if (e.key === 'f') $('#nav-favs').click();
-  if (e.key === 'h') $('#nav-hist').click();
-  if (e.key === 'p') $('#nav-presets').click();
-  if (e.key === 's') $('#nav-settings').click();
-  if (e.key === 'c') $('#compare').click();
-  if (e.key === 'v') $('#view').click();
-  if (e.key === 'd') $('#density').click();
-  if (e.key === 'x') resetFilters();
-  if (e.key === '?') $('#help').click();
-});
+    function draw() {
+      ctx.clearRect(0, 0, w, h);
+      hubs.forEach(hub => {
+        hub.pulse *= 0.95;
+        ctx.beginPath();
+        ctx.arc(hub.x, hub.y, 1.5, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 255, 255, ${hub.baseOpacity + hub.pulse})`;
+        ctx.fill();
+      });
 
-function tickUTC() {
-  const d = new Date();
-  const p = n => String(n).padStart(2, '0');
-  $('#utc').textContent = `${d.getUTCFullYear()}-${p(d.getUTCMonth()+1)}-${p(d.getUTCDate())} ${p(d.getUTCHours())}:${p(d.getUTCMinutes())}:${p(d.getUTCSeconds())}`;
-}
-tickUTC();
-setInterval(tickUTC, 1000);
+      for (let i = pulses.length - 1; i >= 0; i--) {
+        let p = pulses[i];
+        p.progress += 0.02;
+        if (p.progress >= 1) { pulses.splice(i, 1); continue; }
+        const startX = p.start[0] * w, startY = p.start[1] * h;
+        const endX = p.end[0] * w, endY = p.end[1] * h;
+        const cx = (startX + endX) / 2, cy = (startY + endY) / 2 - Math.abs(startX - endX) * 0.4;
+        const opacity = Math.sin(p.progress * Math.PI);
+        
+        ctx.beginPath();
+        ctx.moveTo(startX, startY);
+        ctx.quadraticCurveTo(cx, cy, endX, endY);
+        ctx.strokeStyle = `rgba(139, 92, 246, ${opacity})`;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
 
-const TICK = ['NETWORK CULTURE','GAME PRESERVATION','PLATFORM RESPONSE','GHFIND','PUBLIC SIGNAL','PURE LUA','ZERO DEPS','SINGLE FILE','OPEN SOURCE'];
-const tk = $('#ticker');
-const one = TICK.map(t => `<span class="tick"><span class="dia">◇</span> ${t}</span>`).join('');
-tk.innerHTML = one + one;
+        const t = p.progress;
+        const px = (1-t)*(1-t)*startX + 2*(1-t)*t*cx + t*t*endX;
+        const py = (1-t)*(1-t)*startY + 2*(1-t)*t*cy + t*t*endY;
+        ctx.beginPath();
+        ctx.arc(px, py, 2, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(139, 92, 246, ${opacity})`;
+        ctx.fill();
+        ctx.shadowColor = '#8b5cf6';
+        ctx.shadowBlur = 10;
+      }
+      ctx.shadowBlur = 0;
+      requestAnimationFrame(draw);
+    }
 
-$('#favc').textContent = state.favs.length;
-$('#grid').classList.toggle('list', state.view === 'list');
-$('#view').innerHTML = state.view === 'grid' ? '▦ grid<kbd>v</kbd>' : '☰ list<kbd>v</kbd>';
-$('#density').innerHTML = state.density === 'comfortable' ? '⊞ comfy<kbd>d</kbd>' : '⊟ compact<kbd>d</kbd>';
-document.body.classList.toggle('compact', state.density === 'compact');
+    setInterval(() => {
+      if (pulses.length < 15) {
+        const start = locations[Math.floor(Math.random() * locations.length)];
+        const end = locations[Math.floor(Math.random() * locations.length)];
+        if (start !== end) pulses.push({ start, end, progress: 0 });
+      }
+    }, 600);
+    draw();
 
-const params = new URLSearchParams(location.search);
-const qp = params.get('q');
-if (qp) {
-  $('#q').value = qp;
-  run(qp);
-}
-</script>
+    // --- 2. Search Logic ---
+    async function ghSearch(q, page = 1) {
+      let query = q;
+      if (state.lang) query += ' language:' + state.lang;
+      
+      const p = new URLSearchParams({ q: query, per_page: 12, page });
+      if (state.sort) { p.set('sort', state.sort); p.set('order', 'desc'); }
+      
+      const r = await fetch('https://api.github.com/search/repositories?' + p, {
+        headers: { Accept: 'application/vnd.github+json' }
+      });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.message || 'HTTP ' + r.status);
+      return j;
+    }
 
+    async function runSearch(q) {
+      if (state.busy || !q.trim()) return;
+      state.busy = true;
+      state.q = q;
+      $('#status').hidden = false;
+      $('#status').innerHTML = '<div class="loader"></div>Scanning network...';
+      $('#grid').innerHTML = '';
+
+      try {
+        const d = await ghSearch(q);
+        if (d.items.length === 0) {
+          $('#status').textContent = 'No repositories found.';
+          return;
+        }
+        $('#status').hidden = true;
+        renderGrid(d.items);
+      } catch (e) {
+        $('#status').innerHTML = `<span class="error">Error: ${e.message}</span>`;
+      } finally {
+        state.busy = false;
+      }
+    }
+
+    function renderGrid(items) {
+      items.forEach(repo => {
+        const isFav = state.favs.some(f => f.full_name === repo.full_name);
+        const el = document.createElement('div');
+        el.className = 'card';
+        el.innerHTML = `
+          <div class="card-head">
+            <img class="card-avatar" src="${repo.owner.avatar_url}" alt="">
+            <div class="card-repo">${esc(repo.full_name)}</div>
+            <button class="fav-btn ${isFav ? 'on' : ''}" data-repo='${JSON.stringify(repo).replace(/'/g, "&#39;")}'>
+              ${isFav ? '★' : '☆'}
+            </button>
+          </div>
+          <div class="card-desc">${esc(repo.description || 'No description provided.')}</div>
+          <div class="card-stats">
+            <span>⭐ ${repo.stargazers_count.toLocaleString()}</span>
+            <span>🍴 ${repo.forks_count.toLocaleString()}</span>
+            <span class="lang">${repo.language || 'Text'}</span>
+          </div>
+          <div class="card-actions">
+            <button class="btn-details">View Details</button>
+            <a href="${repo.html_url}" target="_blank" class="btn-link">Open ↗</a>
+          </div>
+        `;
+
+        // Favorite Toggle
+        el.querySelector('.fav-btn').addEventListener('click', (e) => {
+          e.stopPropagation();
+          toggleFav(repo);
+          e.target.classList.toggle('on');
+          e.target.textContent = e.target.classList.contains('on') ? '★' : '☆';
+        });
+
+        // Open Modal
+        el.querySelector('.btn-details').addEventListener('click', () => openModal(repo));
+
+        $('#grid').appendChild(el);
+      });
+    }
+
+    // --- 3. Modal Logic ---
+    async function openModal(repo) {
+      const m = $('#repo-modal');
+      const body = $('#modal-body');
+      m.hidden = false;
+      
+      body.innerHTML = `
+        <div style="display:flex; gap:1rem; align-items:center; margin-bottom:1.5rem;">
+          <img src="${repo.owner.avatar_url}" style="width:64px; height:64px; border-radius:50%;">
+          <div>
+            <h2 style="margin:0; font-size:1.5rem;">${esc(repo.full_name)}</h2>
+            <p style="margin:0; color:var(--text-muted);">${esc(repo.description || '')}</p>
+          </div>
+        </div>
+        <div class="modal-stats">
+          <div><strong>${repo.stargazers_count.toLocaleString()}</strong> Stars</div>
+          <div><strong>${repo.forks_count.toLocaleString()}</strong> Forks</div>
+          <div><strong>${repo.language || 'Text'}</strong> Language</div>
+        </div>
+        <div class="readme-container"><div class="loader"></div></div>
+      `;
+
+      try {
+        const r = await fetch(`https://api.github.com/repos/${repo.full_name}/readme`, {
+          headers: { Accept: 'application/vnd.github.raw' }
+        });
+        const text = await r.text();
+        body.querySelector('.readme-container').innerHTML = `<pre class="readme">${esc(text.slice(0, 5000))}</pre>`;
+      } catch {
+        body.querySelector('.readme-container').innerHTML = `<p>Could not load README.</p>`;
+      }
+    }
+
+    $('#modal-close').addEventListener('click', () => $('#repo-modal').hidden = true);
+    $('#modal-x').addEventListener('click', () => $('#repo-modal').hidden = true);
+
+    // --- 4. Favorites Logic ---
+    function toggleFav(repo) {
+      const i = state.favs.findIndex(f => f.full_name === repo.full_name);
+      if (i >= 0) state.favs.splice(i, 1);
+      else state.favs.push(repo);
+      localStorage.setItem('ghf_favs', JSON.stringify(state.favs));
+    }
+
+    $('#nav-favs').addEventListener('click', (e) => {
+      e.preventDefault();
+      const d = $('#drawer');
+      const body = $('#drawer-body');
+      d.hidden = false;
+      body.innerHTML = state.favs.length ? '' : '<p style="color:var(--text-muted)">No favorites yet.</p>';
+      
+      state.favs.forEach(f => {
+        const el = document.createElement('div');
+        el.className = 'fav-item';
+        el.innerHTML = `
+          <img src="${f.owner.avatar_url}" style="width:24px; height:24px; border-radius:50%;">
+          <span>${esc(f.full_name)}</span>
+        `;
+        el.addEventListener('click', () => openModal(f));
+        body.appendChild(el);
+      });
+    });
+
+    $('#drawer-close').addEventListener('click', () => $('#drawer').hidden = true);
+    $('#drawer-x').addEventListener('click', () => $('#drawer').hidden = true);
+
+    // --- 5. UI Listeners ---
+    $('#search-btn').addEventListener('click', () => runSearch($('#q').value));
+    $('#q').addEventListener('keydown', e => {
+      if (e.key === 'Enter') runSearch($('#q').value);
+    });
+
+    $$('#langs .chip').forEach(c => c.addEventListener('click', () => {
+      state.lang = c.dataset.v;
+      $$('#langs .chip').forEach(b => b.classList.remove('on'));
+      c.classList.add('on');
+      if ($('#q').value) runSearch($('#q').value);
+    }));
+
+    $$('#sorts .chip').forEach(c => c.addEventListener('click', () => {
+      state.sort = c.dataset.v;
+      $$('#sorts .chip').forEach(b => b.classList.remove('on'));
+      c.classList.add('on');
+      if ($('#q').value) runSearch($('#q').value);
+    }));
+
+    // Default search on load
+    runSearch('stars:>10000');
+  </script>
 </body>
 </html>
