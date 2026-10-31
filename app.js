@@ -277,7 +277,7 @@ function card(r, i) {
   return c;
 }
 
-/* ── modal (with extra data) ─────────────────────────────────── */
+/* ── modal ───────────────────────────────────────────────────── */
 async function openModal(r) {
   const m = $('#modal'), b = $('#mbody');
   const h = { Accept: 'application/vnd.github+json' };
@@ -388,7 +388,7 @@ function clearSelection() {
   updateBulk();
 }
 
-/* ── export / import ────────────────────────────────────────── */
+/* ── export ──────────────────────────────────────────────────── */
 function exportData() {
   const data = {
     version: 1,
@@ -409,56 +409,107 @@ function exportData() {
 
 /* ── command palette ────────────────────────────────────────── */
 const CMDS = [
-  { k: 'focus search',       i: '/', run: () => $('#q').focus() },
-  { k: 'trending repos',     i: '⚡', run: () => $('#trending').click() },
-  { k: 'random repo',        i: '⚄', run: () => $('#rand').click() },
-  { k: 'favorites',          i: '★', run: () => $('#nav-favs').click() },
-  { k: 'history',            i: '◷', run: () => $('#nav-hist').click() },
-  { k: 'settings',           i: '⚙', run: () => $('#nav-settings').click() },
-  { k: 'toggle theme',       i: '◐', run: () => $('#theme').click() },
-  { k: 'toggle view',        i: '▦', run: () => $('#view').click() },
-  { k: 'compare selected',   i: '⊕', run: () => $('#cmp').click() },
-  { k: 'toggle filters',     i: '⚙', run: () => $('#adv-btn').click() },
-  { k: 'reset filters',      i: '✕', run: () => $('#reset').click() },
-  { k: 'export data',        i: '↓', run: exportData },
-  { k: 'set token',          i: '🔑', run: () => $('#nav-settings').click() },
+  { k: 'focus search',     i: '/', run: () => $('#q').focus() },
+  { k: 'trending repos',   i: '⚡', run: () => $('#trending').click() },
+  { k: 'random repo',      i: '⚄', run: () => $('#rand').click() },
+  { k: 'favorites',        i: '★', run: () => $('#nav-favs').click() },
+  { k: 'history',          i: '◷', run: () => $('#nav-hist').click() },
+  { k: 'settings',         i: '⚙', run: () => $('#nav-settings').click() },
+  { k: 'toggle theme',     i: '◐', run: () => $('#theme').click() },
+  { k: 'toggle view',      i: '▦', run: () => $('#view').click() },
+  { k: 'compare selected', i: '⊕', run: () => $('#cmp').click() },
+  { k: 'toggle filters',   i: '⚙', run: () => $('#adv-btn').click() },
+  { k: 'reset filters',    i: '✕', run: () => $('#reset').click() },
+  { k: 'export data',      i: '↓', run: exportData },
 ];
 
 let cmdkSel = 0;
+let cmdkFiltered = CMDS;
 function openCmdk() {
   $('#cmdk').hidden = false;
   $('#cmdk-input').value = '';
   cmdkSel = 0;
-  renderCmds(CMDS);
+  cmdkFiltered = CMDS;
+  renderCmds();
   setTimeout(() => $('#cmdk-input').focus(), 20);
 }
 function closeCmdk() { $('#cmdk').hidden = true; }
-function renderCmds(cmds) {
-  $('#cmdk-list').innerHTML = cmds.map((c, i) => `
+function renderCmds() {
+  $('#cmdk-list').innerHTML = cmdkFiltered.map((c, i) => `
     <div class="cmd-item ${i === cmdkSel ? 'sel' : ''}" data-i="${i}">
       <span class="cmdk-ico">${c.i}</span>
       <span class="cmdk-lbl">${esc(c.k)}</span>
     </div>`).join('');
   $$('#cmdk-list .cmd-item').forEach(el => {
-    el.onclick = () => { const c = cmds[+el.dataset.i]; closeCmdk(); c.run(); };
+    el.onclick = () => { const c = cmdkFiltered[+el.dataset.i]; closeCmdk(); c.run(); };
   });
 }
 function filterCmds() {
   const q = $('#cmdk-input').value.toLowerCase();
-  return CMDS.filter(c => c.k.toLowerCase().includes(q));
+  cmdkFiltered = CMDS.filter(c => c.k.toLowerCase().includes(q));
+  if (cmdkSel >= cmdkFiltered.length) cmdkSel = Math.max(0, cmdkFiltered.length - 1);
+  renderCmds();
 }
 
-/* ── keyboard nav on cards ──────────────────────────────────── */
-function setFocus(cards) {
-  cards.forEach(c => c.classList.remove('kbd-focus'));
-  const c = cards[s.focusIdx];
-  if (c) { c.classList.add('kbd-focus'); c.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+/* ── compare ─────────────────────────────────────────────────── */
+async function openCompare() {
+  if (s.cmp.length < 2) return toast('select 2+ first');
+  const chosen = s.cmp.slice(0, 4);
+  const h = { Accept: 'application/vnd.github+json' };
+  if (s.tok) h.Authorization = `Bearer ${s.tok}`;
+  const datas = await Promise.all(chosen.map(n =>
+    fetch(`https://api.github.com/repos/${n}`, { headers: h }).then(r => r.ok ? r.json() : null)
+  ));
+
+  const rows = [
+    { l: '★ stars',  v: d => d?.stargazers_count, f: v => fmt(v), best: 'max' },
+    { l: '⌥ forks',  v: d => d?.forks_count,      f: v => fmt(v), best: 'max' },
+    { l: '! issues', v: d => d?.open_issues_count, f: v => fmt(v), best: 'min' },
+    { l: 'lang',     f: d => d?.language || '—' },
+    { l: 'license',  f: d => d?.license?.spdx_id || '—' },
+    { l: 'updated',  f: d => d ? new Date(d.pushed_at).toLocaleDateString() : '—' }
+  ];
+
+  const html = `
+    <table style="width:100%;border-collapse:collapse;font-size:.85rem;">
+      <thead><tr>
+        <th style="text-align:left;padding:.5rem;border-bottom:1px solid var(--bd)">metric</th>
+        ${chosen.map(n => `<th style="padding:.5rem;border-bottom:1px solid var(--bd);font-family:var(--f-m);color:var(--ac)">${esc(n.split('/')[1])}</th>`).join('')}
+      </tr></thead>
+      <tbody>${rows.map(row => {
+        let bestIdx = -1;
+        if (row.best) {
+          const vals = datas.map(row.v);
+          const nums = vals.map(v => typeof v === 'number' ? v : -1);
+          bestIdx = nums.indexOf(row.best === 'max' ? Math.max(...nums) : Math.min(...nums.filter(v => v >= 0)));
+        }
+        return `
+        <tr>
+          <td style="padding:.5rem;border-bottom:1px solid var(--bd);color:var(--mt)">${row.l}</td>
+          ${datas.map((d, i) => {
+            const cls = i === bestIdx ? 'cmp-win' : '';
+            return `<td style="padding:.5rem;border-bottom:1px solid var(--bd);font-family:var(--f-m);" class="${cls}">${esc(row.f(d))}</td>`;
+          }).join('')}
+        </tr>`;
+      }).join('')}
+      </tbody>
+    </table>`;
+
+  $('#dtitle').textContent = 'COMPARE';
+  $('#dactions').innerHTML = '<button class="mbtn" id="cmp-clear" style="color:var(--er);border-color:var(--er)">CLEAR</button>';
+  $('#dbody').innerHTML = html;
+  $('#dbody').querySelector('#cmp-clear').onclick = () => { clearSelection(); closeDrawer(); };
+  $('#drawer').hidden = false;
+  requestAnimationFrame(() => $('#drawer').classList.add('on'));
 }
 
 /* ── boot ───────────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
+
+  /* sidebar */
   $('#toggle-sb').onclick = () => $('#sb').classList.toggle('collapsed');
 
+  /* search input */
   $('#q').onkeydown = e => {
     if (e.key === 'Enter') { clearTimeout(debT); run($('#q').value); }
   };
@@ -471,6 +522,7 @@ document.addEventListener('DOMContentLoaded', () => {
   $('#go').onclick = () => { clearTimeout(debT); run($('#q').value); };
   $('#more').onclick = () => { s.p++; run(s.q, s.p); };
 
+  /* chips */
   $$('#langs .chip').forEach(c => c.onclick = () => { s.l  = c.dataset.v; setChip('#langs',  s.l);  if(s.q) run(s.q); });
   $$('#sorts .chip').forEach(c => c.onclick = () => { s.sr = c.dataset.v; setChip('#sorts',  s.sr); if(s.q) run(s.q); });
   $$('#stars .chip').forEach(c => c.onclick = () => { s.st = c.dataset.v; setChip('#stars',  s.st); if(s.q) run(s.q); });
@@ -514,7 +566,7 @@ document.addEventListener('DOMContentLoaded', () => {
     ls.s('theme', document.documentElement.dataset.theme);
   };
 
-  /* ── favorites ─────────────────────────────────────────────── */
+  /* favorites drawer */
   $('#nav-favs').onclick = () => {
     const box = $('#dbody'), act = $('#dactions');
     $('#dtitle').textContent = `FAVORITES [${s.favs.length}]`;
@@ -538,7 +590,7 @@ document.addEventListener('DOMContentLoaded', () => {
     requestAnimationFrame(() => $('#drawer').classList.add('on'));
   };
 
-  /* ── history ───────────────────────────────────────────────── */
+  /* history drawer */
   $('#nav-hist').onclick = () => {
     const box = $('#dbody');
     $('#dactions').innerHTML = '';
@@ -556,7 +608,7 @@ document.addEventListener('DOMContentLoaded', () => {
     requestAnimationFrame(() => $('#drawer').classList.add('on'));
   };
 
-  /* ── settings ──────────────────────────────────────────────── */
+  /* settings drawer */
   $('#nav-settings').onclick = () => {
     const box = $('#dbody');
     $('#dactions').innerHTML = '';
@@ -611,4 +663,214 @@ document.addEventListener('DOMContentLoaded', () => {
     requestAnimationFrame(() => $('#drawer').classList.add('on'));
   };
 
-  /* ── help ─────────────────
+  /* help drawer */
+  $('#nav-help').onclick = () => {
+    const box = $('#dbody');
+    $('#dactions').innerHTML = '';
+    $('#dtitle').textContent = 'SHORTCUTS';
+    box.innerHTML = [
+      ['/', 'focus'], ['↵', 'search'], ['Esc', 'close'], ['Ctrl+K', 'command palette'],
+      ['j / k', 'next / prev card'], ['g / G', 'first / last'], ['r', 'random'],
+      ['t', 'trending'], ['f', 'favorites'], ['h', 'history'], ['s', 'settings'],
+      ['v', 'view toggle'], ['c', 'compare']
+    ].map(([k,v]) => `
+      <div style="display:flex;justify-content:space-between;padding:.8rem 0;border-bottom:1px solid var(--bd);">
+        <kbd>${k}</kbd><span class="rsub">${v}</span>
+      </div>`).join('');
+    $('#drawer').hidden = false;
+    requestAnimationFrame(() => $('#drawer').classList.add('on'));
+  };
+
+  $('#drawer-close').onclick = closeDrawer;
+  $('#drawer-back').onclick  = closeDrawer;
+  $('#modal-close').onclick  = closeModal;
+  $('#modal-back').onclick   = closeModal;
+
+  /* random */
+  $('#rand').onclick = async () => {
+    $('#status').innerHTML = '<span class="mload">[ random ]</span>';
+    try {
+      const h = { Accept: 'application/vnd.github+json' }; if (s.tok) h.Authorization = `Bearer ${s.tok}`;
+      const res = await fetch(`https://api.github.com/search/repositories?q=${encodeURIComponent(s.q || 'lua')}&per_page=12`, { headers: h });
+      const d = await res.json();
+      render([d.items[Math.floor(Math.random()*d.items.length)]]);
+      $('#status').innerHTML = '<span class="ok">[ ok ] random</span>';
+      $('#more').hidden = true;
+    } catch(e) { $('#status').innerHTML = `<span class="err-mark" style="color:var(--er)">[ err ]</span> ${esc(e.message)}`; }
+  };
+
+  /* compare */
+  $('#cmp').onclick = openCompare;
+
+  /* bulk action bar */
+  $('#bulk-open').onclick = () => {
+    s.cmp.slice(0, 10).forEach(n => window.open(`https://github.com/${n}`, '_blank'));
+    toast(`opened ${Math.min(s.cmp.length, 10)}`);
+  };
+  $('#bulk-copy').onclick = () => {
+    navigator.clipboard.writeText(s.cmp.map(n => `https://github.com/${n}`).join('\n'));
+    toast('urls copied');
+  };
+  $('#bulk-fav').onclick = () => {
+    let n = 0;
+    s.cmp.forEach(name => {
+      if (!s.favs.some(f => f.full_name === name)) {
+        const cardEl = document.querySelector(`.card[data-name="${name}"]`);
+        const url = `https://github.com/${name}`;
+        s.favs.unshift({ full_name: name, html_url: url, description: '', stars: 0, owner: '' });
+        n++;
+      }
+    });
+    ls.s('favs', s.favs);
+    $('#fc').textContent = s.favs.length;
+    toast(`★ ${n} added`);
+  };
+  $('#bulk-clear').onclick = () => { clearSelection(); toast('cleared'); };
+
+  /* command palette */
+  $('#cmdk-back').onclick = closeCmdk;
+  $('#cmdk-input').addEventListener('input', filterCmds);
+  $('#cmdk-input').addEventListener('keydown', e => {
+    if (e.key === 'Escape') return closeCmdk();
+    if (e.key === 'ArrowDown') { e.preventDefault(); cmdkSel = Math.min(cmdkSel + 1, cmdkFiltered.length - 1); renderCmds(); }
+    if (e.key === 'ArrowUp')   { e.preventDefault(); cmdkSel = Math.max(cmdkSel - 1, 0); renderCmds(); }
+    if (e.key === 'Enter')     { e.preventDefault(); const c = cmdkFiltered[cmdkSel]; if (c) { closeCmdk(); c.run(); } }
+  });
+
+  /* keyboard shortcuts */
+  document.addEventListener('keydown', e => {
+    const inInput = ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName);
+
+    /* command palette — global */
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+      e.preventDefault(); openCmdk(); return;
+    }
+
+    if (inInput) return;
+
+    const k = e.key;
+
+    /* card navigation */
+    const cards = $$('.card:not(.skel)');
+    if (k === 'j') {
+      e.preventDefault();
+      if (!cards.length) return;
+      s.focusIdx = Math.min(s.focusIdx + 1, cards.length - 1);
+      setCardFocus(cards);
+      return;
+    }
+    if (k === 'k') {
+      e.preventDefault();
+      if (!cards.length) return;
+      s.focusIdx = Math.max(s.focusIdx - 1, 0);
+      setCardFocus(cards);
+      return;
+    }
+    if (k === 'g') { if (cards.length) { s.focusIdx = 0; setCardFocus(cards); } return; }
+    if (k === 'G') { if (cards.length) { s.focusIdx = cards.length - 1; setCardFocus(cards); } return; }
+    if (k === 'Enter' && s.focusIdx >= 0 && cards[s.focusIdx]) {
+      const info = cards[s.focusIdx].querySelector('.dt');
+      if (info) info.click();
+      return;
+    }
+
+    if (k === '/') { e.preventDefault(); $('#q').focus(); }
+    if (k === 'Escape') { closeModal(); closeDrawer(); closeCmdk(); }
+    if (k === 'r') $('#rand').click();
+    if (k === 't') $('#trending').click();
+    if (k === 'f') $('#nav-favs').click();
+    if (k === 'h') $('#nav-hist').click();
+    if (k === 's') $('#nav-settings').click();
+    if (k === 'a') $('#nav-help').click();
+    if (k === 'v') $('#view').click();
+    if (k === 'c') $('#cmp').click();
+  });
+
+  function setCardFocus(cards) {
+    cards.forEach(c => c.classList.remove('kbd-focus'));
+    const c = cards[s.focusIdx];
+    if (c) { c.classList.add('kbd-focus'); c.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+  }
+
+  /* ticker */
+  const TICK = ['NETWORK','ARCHIVE','SEARCH','OPEN SOURCE','GHFIND','ZERO DEPS'];
+  $('#ticker').innerHTML = TICK.concat(TICK)
+    .map(t => `<span><span class="dia">◇</span>${t}</span>`).join('');
+
+  /* restore view + badge */
+  $('#fc').textContent = s.favs.length;
+  if (s.v === 'list') { $('#grid').classList.add('list'); $('#view').innerHTML = '☰ list'; }
+
+  /* theme persistence */
+  const savedTheme = ls.g('theme', '');
+  if (savedTheme) document.documentElement.dataset.theme = savedTheme;
+
+  /* UTC clock */
+  const tickUtc = () => {
+    const n = new Date();
+    const pad = v => String(v).padStart(2, '0');
+    $('#utc').textContent = `${pad(n.getUTCHours())}:${pad(n.getUTCMinutes())}:${pad(n.getUTCSeconds())}`;
+  };
+  tickUtc();
+  setInterval(tickUtc, 1000);
+
+  /* restore URL hash */
+  readHash();
+  if (s.q) run(s.q);
+
+  /* particle background */
+  const cvs = $('#cv'), ctx = cvs.getContext('2d');
+  let w, h, pts = [], mouse = { x: -1000, y: -1000 };
+  const vp = $('#vp');
+
+  const init = () => {
+    w = cvs.width  = vp.clientWidth;
+    h = cvs.height = vp.clientHeight;
+    pts = Array.from({ length: 80 }, () => ({
+      x: Math.random() * w, y: Math.random() * h,
+      vx: (Math.random() - .5), vy: (Math.random() - .5),
+      r: Math.random() * 1.5 + .5
+    }));
+  };
+  window.addEventListener('resize', init);
+  init();
+
+  vp.addEventListener('mousemove', e => {
+    const r = vp.getBoundingClientRect();
+    mouse.x = e.clientX - r.left;
+    mouse.y = e.clientY - r.top + vp.scrollTop;
+  });
+  vp.addEventListener('mouseleave', () => { mouse.x = -1000; mouse.y = -1000; });
+
+  const draw = () => {
+    ctx.clearRect(0, 0, w, h);
+    pts.forEach((p, i) => {
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < 0 || p.x > w) p.vx *= -1;
+      if (p.y < 0 || p.y > h) p.vy *= -1;
+
+      for (let j = i + 1; j < pts.length; j++) {
+        const q = pts[j];
+        const d = Math.hypot(p.x - q.x, p.y - q.y);
+        if (d < 120) {
+          ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y);
+          ctx.strokeStyle = `rgba(0,255,204,${.15 * (1 - d / 120)})`;
+          ctx.stroke();
+        }
+      }
+
+      const d = Math.hypot(mouse.x - p.x, mouse.y - p.y);
+      if (d < 150 && d > 0) {
+        p.x -= (mouse.x - p.x) / d * 2;
+        p.y -= (mouse.y - p.y) / d * 2;
+      }
+
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(0,255,204,.7)';
+      ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  };
+  draw();
+});
