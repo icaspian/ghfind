@@ -3,94 +3,118 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>◆ Claude Code Hub</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>◆</text></svg>">
+<title>◇ GHFIND</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐣</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700;800&family=Kanit:wght@600;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;700&family=Kanit:wght@600;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
-<div class="browser-chrome">
-  <div class="os-bar">
-    <div class="os-controls"><div class="os-dot red"></div><div class="os-dot yellow"></div><div class="os-dot green"></div></div>
-    <div class="browser-tabs"><div class="tab"><span class="favicon">◆</span> Claude Code Hub</div></div>
-    <div style="width: 60px;"></div>
-  </div>
-  
-  <div class="toolbar">
-    <div class="nav-actions">
-      <button id="toggle-sidebar">☰</button>
-      <button>←</button><button>→</button><button onclick="location.reload()">↻</button>
-    </div>
-    <div class="address-bar">
-      <span class="address-icon">🔒</span>
-      <span class="address-protocol">claude://</span>
-      <input id="repo-search" type="text" placeholder="Search topic:claude-code..." autocomplete="off" spellcheck="false">
-      <kbd>/</kbd>
-    </div>
-    <div style="display: flex; gap: 0.5rem; align-items: center;">
-      <button id="theme-toggle" class="nav-actions" style="font-size: 1.2rem;">◐</button>
-      <button id="submit-btn" class="m-btn primary" style="padding: 0.4rem 1rem; font-size: 0.8rem; border-radius: 8px;">＋ Submit</button>
-    </div>
-  </div>
-</div>
-
-<div class="browser-body">
-  <div class="sidebar" id="sidebar">
-    <div class="sidebar-title">Explore</div>
-    <div class="side-link active" data-cat="all"><span class="icon">⌂</span> All Repos</div>
-    <div class="side-link" data-cat="claude-code"><span class="icon">🏛️</span> Core</div>
-    <div class="side-link" data-cat="claude-skills"><span class="icon">⚡</span> Skills</div>
-    <div class="side-link" data-cat="mcp-server"><span class="icon">🔌</span> MCP Servers</div>
-    <div class="side-link" data-cat="claude-api"><span class="icon">🧠</span> API / Frameworks</div>
-    <div class="sidebar-title">Library</div>
-    <div class="side-link" onclick="toast('Saved locally')"><span class="icon">★</span> Favorites</div>
-  </div>
-
-  <div class="viewport" id="viewport">
-    <div class="bg-grid"></div>
-    <canvas id="map-canvas"></canvas>
-    
-    <div class="app-content">
-      <section class="hero">
-        <h1 class="hero-title">CLAUDE CODE HUB</h1>
-        <div class="hero-tag">live github api integration · open source ecosystem</div>
-        <div class="stats-grid">
-          <div class="stat-item"><div class="num" id="stat-repos">0</div><div class="lbl">Repos Loaded</div></div>
-          <div class="stat-item"><div class="num" id="stat-stars">0</div><div class="lbl">Total Stars</div></div>
+  <div class="app">
+    <div class="chrome">
+      <div class="osbar">
+        <div class="dots"><i class="r"></i><i class="y"></i><i class="g"></i></div>
+        <div class="tabs"><div class="tab"><span class="ic">◇</span> GHFIND</div></div>
+      </div>
+      <div class="toolbar">
+        <button id="toggle-sb" class="tbtn">☰</button>
+        <div class="urlbar">
+          <span class="lock">🔒</span>
+          <span class="proto" id="proto">ghfind://</span>
+          <input id="q" type="text" placeholder="search repos..." autocomplete="off">
+          <button id="go" class="gobtn">↵</button>
         </div>
-      </section>
-
-      <div class="filter-bar">
-        <div class="filter-group">
-          <label>Sort</label>
-          <select id="sort-filter">
-            <option value="stars">Stars ↓</option>
-            <option value="updated">Recently Updated</option>
-            <option value="forks">Forks ↓</option>
-          </select>
+        <button id="theme" class="tbtn">◐</button>
+      </div>
+    </div>
+    <div class="body">
+      <div class="sidebar" id="sb">
+        <div class="sb-title">Workspace</div>
+        <div class="sl active"><span>⌂</span> Home</div>
+        <div class="sl" id="nav-favs"><span>★</span> Favorites <span class="badge" id="fc">0</span></div>
+        <div class="sl" id="nav-hist"><span>◷</span> History</div>
+        <div class="sb-title">System</div>
+        <div class="sl" id="nav-settings"><span>⚙</span> Settings</div>
+        <div class="sl" id="nav-help"><span>?</span> Shortcuts</div>
+      </div>
+      <div class="viewport" id="vp">
+        <div class="bg-grid"></div>
+        <canvas id="cv"></canvas>
+        <div class="content">
+          <div class="hero">
+            <div class="hl">
+              <div class="sig"><span class="dot"></span> ONLINE</div>
+              <h1 class="title">GHFIND</h1>
+              <div class="boxes">
+                <div class="box"><div class="k">RATE</div><div class="v" id="rate">—</div></div>
+                <div class="box"><div class="k">UTC</div><div class="v" id="utc">—</div></div>
+              </div>
+            </div>
+            <div class="hr">
+              <svg class="orbit" viewBox="0 0 500 500">
+                <circle cx="250" cy="250" r="80"/><circle cx="250" cy="250" r="160" stroke-dasharray="4 8"/><circle cx="250" cy="250" r="230" stroke-dasharray="2 10"/>
+                <polygon points="250,40 460,250 250,460 40,250" fill="none"/>
+              </svg>
+              <div class="mascot"><div class="glow"></div><div class="glyph">🐣</div></div>
+            </div>
+          </div>
+          <div class="search-area" id="search">
+            <div class="s-head"><h2>SEARCH</h2><span class="line"></span></div>
+            <div class="chips-bar">
+              <div class="chips" id="langs">
+                <button class="chip on" data-v="">any</button><button class="chip" data-v="lua">lua</button><button class="chip" data-v="python">py</button><button class="chip" data-v="rust">rust</button><button class="chip" data-v="go">go</button><button class="chip" data-v="javascript">js</button><button class="chip" data-v="typescript">ts</button><button class="chip" data-v="c">c</button><button class="chip" data-v="c++">c++</button>
+              </div>
+              <div class="chips" id="sorts">
+                <button class="chip on" data-v="">best</button><button class="chip" data-v="stars">★</button><button class="chip" data-v="forks">⌥</button><button class="chip" data-v="updated">◷</button>
+              </div>
+            </div>
+            <div class="chips-bar">
+              <div class="chips" id="stars">
+                <button class="chip on" data-v="">★ any</button><button class="chip" data-v="10">10+</button><button class="chip" data-v="100">100+</button><button class="chip" data-v="1000">1k+</button>
+              </div>
+              <div class="chips" id="age">
+                <button class="chip on" data-v="">◷ any</button><button class="chip" data-v="30">30d</button><button class="chip" data-v="365">1y</button>
+              </div>
+            </div>
+            <div class="chips-bar">
+              <button class="chip" id="reset">✕ reset</button>
+              <button class="chip" id="rand">⚄ random</button>
+              <button class="chip" id="cmp">⊕ compare</button>
+              <button class="chip" id="view">▦ grid</button>
+            </div>
+            <div class="status" id="status"></div>
+            <div class="stats" id="stats" hidden></div>
+            <div class="grid" id="grid"></div>
+            <div class="more-wrap"><button id="more" hidden>LOAD MORE</button></div>
+          </div>
         </div>
       </div>
+    </div>
+    <div class="ticker"><div class="track" id="ticker"></div></div>
+  </div>
 
-      <div class="repo-grid" id="repo-grid"></div>
+  <div class="drawer" id="drawer" hidden>
+    <div class="db" id="drawer-back"></div>
+    <div class="dp">
+      <div class="dh">
+        <h3 id="dtitle" style="font-family:var(--f-m); color:var(--ac)">Favorites</h3>
+        <div id="dactions"></div>
+        <button class="mbtn" id="drawer-close">✕</button>
+      </div>
+      <div class="dbody" id="dbody"></div>
     </div>
   </div>
-</div>
 
-<div class="ticker"><div class="ticker-track" id="ticker"></div></div>
-
-<div class="modal" id="repo-modal" hidden>
-  <div class="modal-back" id="modal-back"></div>
-  <div class="modal-panel">
-    <button class="modal-close" id="modal-close">✕</button>
-    <div class="modal-body" id="modal-body"></div>
+  <div class="modal" id="modal" hidden>
+    <div class="mb" id="modal-back"></div>
+    <div class="mp">
+      <button class="mbtn mc" id="modal-close">✕</button>
+      <div class="mbody" id="mbody"></div>
+    </div>
   </div>
-</div>
 
-<div class="toast" id="toast"></div>
-
-<script src="app.js"></script>
+  <div class="toast" id="toast"></div>
+  <script src="app.js"></script>
 </body>
 </html>
