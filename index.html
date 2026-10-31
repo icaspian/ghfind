@@ -22,7 +22,7 @@
         <div class="urlbar">
           <span class="lock">🔒</span>
           <span class="proto" id="proto">ghfind://</span>
-          <input id="q" type="text" placeholder="search repos..." autocomplete="off">
+          <input id="q" type="text" placeholder="search repos...  (ctrl+k)" autocomplete="off">
           <button id="go" class="gobtn">↵</button>
         </div>
         <button id="theme" class="tbtn">◐</button>
@@ -79,9 +79,32 @@
             </div>
             <div class="chips-bar">
               <button class="chip" id="reset">✕ reset</button>
+              <button class="chip" id="trending">⚡ trending</button>
+              <button class="chip" id="adv-btn">⚙ filters</button>
               <button class="chip" id="rand">⚄ random</button>
               <button class="chip" id="cmp">⊕ compare</button>
               <button class="chip" id="view">▦ grid</button>
+            </div>
+            <div class="chips-bar" id="adv-bar" hidden>
+              <div class="chips" id="lic">
+                <button class="chip on" data-v="">license any</button>
+                <button class="chip" data-v="mit">MIT</button>
+                <button class="chip" data-v="apache-2.0">Apache</button>
+                <button class="chip" data-v="gpl-3.0">GPL-3</button>
+                <button class="chip" data-v="isc">ISC</button>
+                <button class="chip" data-v="bsd-3-clause">BSD-3</button>
+              </div>
+              <div class="chips" id="forks">
+                <button class="chip on" data-v="">⌥ any</button>
+                <button class="chip" data-v="10">10+</button>
+                <button class="chip" data-v="100">100+</button>
+                <button class="chip" data-v="1000">1k+</button>
+              </div>
+              <div class="chips" id="arch">
+                <button class="chip on" data-v="exclude">hide archived</button>
+                <button class="chip" data-v="only">archived only</button>
+                <button class="chip" data-v="">any archived</button>
+              </div>
             </div>
             <div class="status" id="status"></div>
             <div class="stats" id="stats" hidden></div>
@@ -90,6 +113,13 @@
           </div>
         </div>
       </div>
+    </div>
+    <div class="bulkbar" id="bulkbar" hidden>
+      <span id="bulkcount">0 selected</span>
+      <button class="mbtn" id="bulk-open">OPEN ALL</button>
+      <button class="mbtn" id="bulk-copy">COPY URLS</button>
+      <button class="mbtn" id="bulk-fav">★ FAV ALL</button>
+      <button class="mbtn" id="bulk-clear" style="color:var(--er);border-color:var(--er)">CLEAR</button>
     </div>
     <div class="ticker"><div class="track" id="ticker"></div></div>
   </div>
@@ -111,6 +141,14 @@
     <div class="mp">
       <button class="mbtn mc" id="modal-close">✕</button>
       <div class="mbody" id="mbody"></div>
+    </div>
+  </div>
+
+  <div class="cmdk" id="cmdk" hidden>
+    <div class="cmdk-back" id="cmdk-back"></div>
+    <div class="cmdk-panel">
+      <input id="cmdk-input" type="text" placeholder="type a command…" autocomplete="off">
+      <div class="cmdk-list" id="cmdk-list"></div>
     </div>
   </div>
 
